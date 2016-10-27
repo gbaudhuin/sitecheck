@@ -1,0 +1,11 @@
+{
+  "esversion": 6,
+  "forin": true,
+  "futurehostile": true,
+  "latedef": "nofunc",
+  "undef":true,
+  "unused":"vars",
+  "strict":"global",
+  "node": true,
+  "mocha":true
+}

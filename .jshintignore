@@ -1,0 +1,9 @@
+.git/
+.vs/
+bin/
+dyn/
+log/
+node_modules/
+obj/
+public/
+typings/
