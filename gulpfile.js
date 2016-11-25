@@ -64,16 +64,4 @@ gulp.task('doc', function (cb) {
         .pipe(jsdoc(cb));
 });
 
-/*
-gulp.task('test2', function () {
-    return gulp.src(['ut/ut_*'], { read: false })
-        .pipe(cover.instrument({
-            pattern: ['tech.js']
-        }))
-        .pipe(mocha())
-        .pipe(cover.gather())
-        .pipe(cover.format())
-        .pipe(gulp.dest('reports'));
-});
-*/
 gulp.task('default', ['lint']);
