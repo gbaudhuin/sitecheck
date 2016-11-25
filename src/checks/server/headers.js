@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license Apache-2.0
  * Copyright (C) 2016 The Sitecheck Project
  *
@@ -18,9 +18,8 @@
 
 var Check = require('../../check');
 
-module.exports = class CheckHeaders extends Check 
-{
+module.exports = class CheckHeaders extends Check {
     check() {
         this.raiseIssue("ref", "positionIdentifier", "CheckHeaders errorContent", true);
     }
-}
+};

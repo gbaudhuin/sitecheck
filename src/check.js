@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license Apache-2.0
  * Copyright (C) 2016 The Sitecheck Project
  *
@@ -25,12 +25,12 @@ class Check {
      */
     constructor() {
         this.hooks = [];
-        this.hooks["OnRaiseIssue"] = [];
+        this.hooks.OnRaiseIssue = [];
     }
 
     setHook(_CheckHookEnum, callback) {
         if (_CheckHookEnum == "OnRaiseIssue") {
-            this.hooks["OnRaiseIssue"].push(callback);
+            this.hooks.OnRaiseIssue.push(callback);
         }
     }
 
@@ -51,8 +51,8 @@ class Check {
                                             Only checks that are 100% sure to be true positives  in any case should set this value to false.
      */
     raiseIssue(ref, positionIdentifier, errorContent, maybeFalsePositive) {
-        for (var i = 0; i < this.hooks["OnRaiseIssue"].length; i++) {
-            let callback = this.hooks["OnRaiseIssue"][i];
+        for (var i = 0; i < this.hooks.OnRaiseIssue.length; i++) {
+            let callback = this.hooks.OnRaiseIssue[i];
             callback(ref, positionIdentifier, errorContent, maybeFalsePositive);
         }
     }

@@ -36,11 +36,16 @@
     <Compile Include="requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\headers.js" />
+    <Compile Include="test\ut_app.js">
+      <SubType>Code</SubType>
+      <TestFramework>ExportRunner</TestFramework>
+    </Compile>
     <Compile Include="test\ut_check.js">
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <None Include=".licenseheader" />
+    <Content Include=".coveralls.yml" />
     <Content Include=".travis.yml" />
     <Content Include="package.json" />
     <Content Include="README.md" />

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 var gulp = require('gulp');
 var jshint = require('gulp-jshint');
@@ -8,7 +8,7 @@ var istanbul = require('gulp-istanbul');
 var coveralls = require('gulp-coveralls');
 
 gulp.task('lint', function () {
-    return gulp.src('**/*.js')
+    return gulp.src('src/**/*.js')
         .pipe(jshint())
         .pipe(jshint.reporter('default'))
 		.pipe(jshint.reporter('fail'));
