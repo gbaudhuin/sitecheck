@@ -1,6 +1,6 @@
 {
   "name": "sitecheck",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Open Source web application security scanner",
   "license": "Apache-2.0",
   "main": "src/app.js",
@@ -27,13 +27,20 @@
     "node": ">=6.6"
   },
   "keywords": [
-    "securiy",
+    "security",
+	"security test",
+	"security check",
     "web security",
+	"web tester",
+	"website tester",
+	"website audit",
     "security scanner",
+	"vuln",
     "vulnerability",
     "web vulnerability",
     "vulnerability scanner",
     "security audit",
+	"vuln test",
 	"penn test",
 	"penetration testing"
   ],
