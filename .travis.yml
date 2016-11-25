@@ -1,5 +1,12 @@
 language: node_js
 node_js:
-  - "iojs"
+  - "node"
+install:
+  - npm install
+before_script:
+  - npm install -g gulp
 script:
-  - npm run lint
+  - gulp lint
+  - gulp test
+after_script:  
+ - ./node_modules/.bin/gulp coveralls

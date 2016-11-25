@@ -281,7 +281,6 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /log
-/wb_scanproxy/log
 /media
 /typings
 /public/img/thumbs
@@ -295,3 +294,5 @@ node_modules/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 /dyn
+/.coverrun
+/.coverdata

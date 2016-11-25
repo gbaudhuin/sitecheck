@@ -3,20 +3,40 @@
   "version": "0.0.1",
   "description": "Open Source web application security scanner",
   "license": "Apache-2.0",
-  "main": "app.js",
+  "main": "src/app.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/gbaudhuin/sitecheck"
   },
+  "bin": {
+    "sitecheck": "src/app.js"
+  },
   "scripts": {
-    "lint": "jshint --config jshintconfig.json ."
+    "start": "node ./src/app.js",
+    "lint": "jshint ./src",
+    "mocha": "mocha ./test/*.js"
   },
   "author": {
     "name": "Guillaume BAUDHUIN"
   },
   "dependencies": {
+    "async": "^2.1.2",
+    "commander": "^2.9.0",
+    "request": "^2.76.0",
+    "winston": "^2.3.0"
+  },
+  "devDependencies": {
+    "coveralls": "^2.11.15",
+    "gulp": "^3.9.1",
+    "gulp-coverage": "^0.3.38",
+    "gulp-coveralls": "^0.1.4",
+    "gulp-istanbul": "^1.1.1",
+    "gulp-jsdoc3": "^1.0.1",
+    "gulp-jshint": "^2.0.4",
+    "gulp-mocha": "^3.0.1",
+    "jscover": "^1.0.0",
     "jshint": "^2.9.4",
-    "mocha": "^3.1.2",
-    "request": "^2.76.0"
+    "mocha": "^3.0.1",
+    "mocha-lcov-reporter": "^1.2.0"
   }
 }
