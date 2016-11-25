@@ -5,8 +5,7 @@ var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
 var jsdoc = require('gulp-jsdoc3');
 var istanbul = require('gulp-istanbul');
-//var cover = require('gulp-coverage');
-//var coveralls = require('gulp-coveralls');
+var coveralls = require('gulp-coveralls');
 
 gulp.task('lint', function () {
     return gulp.src('**/*.js')

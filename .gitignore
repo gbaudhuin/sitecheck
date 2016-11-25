@@ -296,3 +296,4 @@ node_modules/
 /dyn
 /.coverrun
 /.coverdata
+/.coveralls.yml
