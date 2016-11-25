@@ -1,6 +1,6 @@
 {
   "name": "sitecheck",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Open Source web application security scanner",
   "license": "Apache-2.0",
   "main": "src/app.js",
@@ -17,8 +17,26 @@
     "mocha": "mocha ./test/*.js"
   },
   "author": {
-    "name": "Guillaume BAUDHUIN"
+    "name": "Guillaume BAUDHUIN",
+	"email": "guillaume.baudhuin@gmail.com"
   },
+  "bugs": {
+	"url": "https://github.com/gbaudhuin/sitecheck/issues"
+  },
+  "engines": {
+    "node": ">=6.6"
+  },
+  "keywords": [
+    "securiy",
+    "web security",
+    "security scanner",
+    "vulnerability",
+    "web vulnerability",
+    "vulnerability scanner",
+    "security audit",
+	"penn test",
+	"penetration testing"
+  ],
   "dependencies": {
     "async": "^2.1.2",
     "commander": "^2.9.0",
