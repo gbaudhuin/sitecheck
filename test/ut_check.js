@@ -17,44 +17,43 @@
 "use strict";
 var assert = require('assert');
 var Check = require('../src/check');
+const CONSTANTS = require("../src/constants.js");
 
 describe('Check class', function () {
     it('Test OnRaiseIssue', function (done) {
-        var c = new Check();
+        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         c.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
             assert.ok(errorContent == "errorContent", "This shouldn't fail");
             done();
         });
 
-        c.raiseIssue("ref", "positionIdentifier", "errorContent", "maybeFalsePositive");
+        c._raiseIssue("ref", "positionIdentifier", "errorContent", "maybeFalsePositive");
     });
 
-    it('does not allow bad labels on setHook function call', function () {
-        var c = new Check();
+    it('does not allow bad labels on setHook function call', function (done) {
+        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         var hookCalled = false;
         c.setHook("OnRaiseIssue_badlabel", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
             hookCalled = true;
         });
-        c.check();
-        assert.equal(hookCalled, false);
+        c.check().then(function () {
+            assert.equal(hookCalled, false);
+            done();
+        });
     });
 
-    it('Test check does not raise issue', function () {
-        var c = new Check();
+    it('Test check does not raise issue', function (done) {
+        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         var hookCalled = false;
         c.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
             hookCalled = true;
         });
-        c.check();
-        assert.equal(hookCalled, false);
+        c.check().then(function () {
+            assert.equal(hookCalled, false);
+            done();
+        });
     });
-
-    /*
-    it('Test 2', function() {
-        assert.ok(1 === 1, "This shouldn't fail");
-        assert.ok(false, "This should fail");
-    });*/
 });

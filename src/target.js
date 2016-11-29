@@ -15,11 +15,24 @@
  * limitations under the License.
  */
 "use strict";
+var isRelativeUrl = require('is-relative-url');
 
-var Check = require('../../check');
-
-module.exports = class CheckHeaders extends Check {
-    check() {
-        this.raiseIssue("ref", "positionIdentifier", "CheckHeaders errorContent", true);
+/**
+ * An atomic scan target
+ */
+class Target {
+    /**
+     * Constructor
+     * @param {String} uri - Url of target. Must be an absolute uri.
+     * @param {String} scanId - Id of scan
+     * @param {TargetType} targetType
+     */
+    constructor(uri, scanId, targetType) {
+        if (uri && isRelativeUrl(uri)) throw new Error("uri cannot be relative. Uri must be absolute.");
+        this.uri = uri;
+        this.scanId = scanId;
+        this.targetType = targetType;
     }
-};
+}
+
+module.exports = Target;

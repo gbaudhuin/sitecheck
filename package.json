@@ -1,6 +1,6 @@
 {
   "name": "sitecheck",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Open Source web application security scanner",
   "license": "Apache-2.0",
   "main": "src/app.js",
@@ -9,48 +9,54 @@
     "url": "https://github.com/gbaudhuin/sitecheck"
   },
   "bin": {
-    "sitecheck": "src/app.js"
+    "sitecheck": "bin/cli.js"
   },
   "scripts": {
     "start": "node ./src/app.js",
     "lint": "jshint ./src",
-    "mocha": "mocha ./test/*.js"
+    "mocha": "mocha ./test/**/*.js"
   },
   "author": {
     "name": "Guillaume BAUDHUIN",
-	"email": "guillaume.baudhuin@gmail.com"
+    "email": "guillaume.baudhuin@gmail.com"
   },
   "bugs": {
-	"url": "https://github.com/gbaudhuin/sitecheck/issues"
+    "url": "https://github.com/gbaudhuin/sitecheck/issues"
   },
   "engines": {
     "node": ">=6.6"
   },
   "keywords": [
     "security",
-	"security test",
-	"security check",
+    "security test",
+    "security check",
     "web security",
-	"web tester",
-	"website tester",
-	"website audit",
+    "web tester",
+    "website tester",
+    "website audit",
     "security scanner",
-	"vuln",
+    "vuln",
     "vulnerability",
     "web vulnerability",
     "vulnerability scanner",
     "security audit",
-	"vuln test",
-	"penn test",
-	"penetration testing"
+    "vuln test",
+    "penn test",
+    "penetration testing"
   ],
   "dependencies": {
     "async": "^2.1.2",
-    "commander": "^2.9.0",
+    "is-relative-url": "^2.0.0",
+    "meow": "^3.7.0",
+    "minimist": "^1.2.0",
+    "moment": "^2.17.0",
+    "rc": "^1.1.6",
     "request": "^2.76.0",
+    "valid-url": "^1.0.9",
     "winston": "^2.3.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "coveralls": "^2.11.15",
     "gulp": "^3.9.1",
     "gulp-coverage": "^0.3.38",

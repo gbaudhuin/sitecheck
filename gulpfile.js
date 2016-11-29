@@ -8,32 +8,11 @@ var istanbul = require('gulp-istanbul');
 var coveralls = require('gulp-coveralls');
 
 gulp.task('lint', function () {
-    return gulp.src('src/**/*.js')
+    return gulp.src(['src/**/*.js', 'bin/*.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'))
 		.pipe(jshint.reporter('fail'));
 });
-
-gulp.task('test_old', function () {
-    return gulp.src(['test/ut_*.js'], { read: false })
-        .pipe(mocha({
-            reporter: 'spec',
-            globals: {
-                // should: require('should')
-            }
-        }));
-});
-
-//gulp.task('coverage', function () {
-//    return gulp.src(['ut/ut_*.js'], { read: false })
-//        .pipe(cover.instrument({
-//            pattern: ['**/src*']
-//        }))
-//        .pipe(mocha())
-//        .pipe(cover.gather())
-//        .pipe(cover.format())
-//        .pipe(gulp.dest('reports'));
-//});
 
 gulp.task('pre-test', function () {
     return gulp.src(['src/**/*.js'])
@@ -44,12 +23,12 @@ gulp.task('pre-test', function () {
 });
 
 gulp.task('test', ['pre-test'], function () {
-    return gulp.src(['test/*.js'])
+    return gulp.src(['test/**/*.js'])
         .pipe(mocha())
         // Creating the reports after tests ran
         .pipe(istanbul.writeReports())
         // Enforce a coverage of at least x%
-        .pipe(istanbul.enforceThresholds({ thresholds: { global: 10 } }));
+        .pipe(istanbul.enforceThresholds({ thresholds: { global: 1 } }));
 });
 
 gulp.task('coveralls', function () {

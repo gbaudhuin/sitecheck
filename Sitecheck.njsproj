@@ -12,7 +12,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ddec1656-83df-4d52-a1c0-ae8d73d3476a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>src\app.js</StartupFile>
+    <StartupFile>bin\cli.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -21,7 +21,7 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
     <ProjectView>ShowAllFiles</ProjectView>
-    <StartWebBrowser>false</StartWebBrowser>
+    <StartWebBrowser>False</StartWebBrowser>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,15 +30,20 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="bin\cli.js" />
     <Compile Include="gulpfile.js" />
-    <Compile Include="JavaScript1.js" />
     <Compile Include="src\app.js" />
     <Compile Include="requestwrapper.js" />
     <Compile Include="src\check.js" />
-    <Compile Include="src\checks\server\headers.js" />
+    <Compile Include="src\checks\server\check_headers.js" />
+    <Compile Include="src\target.js" />
+    <Compile Include="src\constants.js" />
+    <Compile Include="test\checks\server\ut_headers.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\ut_app.js">
       <SubType>Code</SubType>
-      <TestFramework>ExportRunner</TestFramework>
+      <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_check.js">
       <SubType>Code</SubType>
@@ -47,35 +52,52 @@
     <None Include=".licenseheader" />
     <Content Include=".coveralls.yml" />
     <Content Include=".travis.yml" />
+    <Content Include="config\default.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="bin\" />
+    <Folder Include="config\" />
     <Folder Include="src\" />
     <Folder Include="src\checks\" />
     <Folder Include="src\checks\server\" />
     <Folder Include="test\" />
+    <Folder Include="test\checks\" />
+    <Folder Include="test\checks\server\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\async\" />
+    <Folder Include="typings\globals\chai\" />
     <Folder Include="typings\globals\commander\" />
+    <Folder Include="typings\globals\config\" />
     <Folder Include="typings\globals\gulp-istanbul\" />
     <Folder Include="typings\globals\gulp-mocha\" />
     <Folder Include="typings\globals\gulp\" />
+    <Folder Include="typings\globals\minimist\" />
     <Folder Include="typings\globals\mocha\" />
+    <Folder Include="typings\globals\moment\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\request\" />
+    <Folder Include="typings\globals\strip-json-comments\" />
+    <Folder Include="typings\globals\valid-url\" />
     <Folder Include="typings\globals\winston\" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\chai\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\commander\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\config\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp-istanbul\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp-mocha\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\minimist\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\mocha\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\strip-json-comments\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\valid-url\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\winston\index.d.ts" />
     <TypeScriptCompile Include="typings\index.d.ts" />
   </ItemGroup>

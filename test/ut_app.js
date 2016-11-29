@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
 var assert = require('assert');
 
 describe('app.js', function () {
@@ -28,3 +29,14 @@ describe('app.js', function () {
         assert.equal(exceptionRaised, false);
     });
 });
+/*
+describe('scan()', function () {
+    it('parses url param correctly', function () {
+        // 4 cas : 
+        // url dans config mais pas en cl (command line)
+        // pas config mais en cl
+        // aucun
+        // les deux
+        assert.equal(true, true);
+    });
+});*/
