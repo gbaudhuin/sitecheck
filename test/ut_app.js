@@ -16,7 +16,12 @@
  */
 "use strict";
 var assert = require('assert');
+var winston = require('winston');
+var fs = require('fs-extra');
 
+/**
+* Test src/app.js
+*/
 describe('app.js', function () {
     it('doesn\'t raise exceptions', function () {
         var exceptionRaised = false;
@@ -28,15 +33,166 @@ describe('app.js', function () {
 
         assert.equal(exceptionRaised, false);
     });
-});
-/*
-describe('scan()', function () {
-    it('parses url param correctly', function () {
-        // 4 cas : 
-        // url dans config mais pas en cl (command line)
-        // pas config mais en cl
-        // aucun
-        // les deux
-        assert.equal(true, true);
+
+    describe('#scan', function () {
+        beforeEach(function () {
+            try {
+                // app adds a transports.File each time it runs : we need to reset winston transports each time
+                winston.remove(winston.transports.File);
+            } catch (err){ }
+        });
+        /*
+        */
+        it('verify check names correctly', function (done) {
+            var scan = require('../src/app.js');
+
+            // invalid check name
+            var params = { url: "http://www.example.com", checks: ["headers", "b*"], log: true }; // log=true because winston.stream needs a file transport to work
+            scan(params);
+
+            var winston_stream = winston.stream({ start: -1 });
+            winston_stream.on('log', function (log) {
+                var index = log.message.indexOf("Invalid check name 'b*'");
+                if (index !== -1) {
+                    winston_stream.destroy();
+                    done();
+                }
+            });
+        });
+
+        it('generates log directory if it does not exist', function (done) {
+            var scan = require('../src/app.js');
+            // remove unit tests logs 
+            try {
+                fs.removeSync('./log');
+            } catch (err) { }
+            // invalid check name
+            var params = { url: "http://www.example.com", checks: ["headers", "b*"], log: true };
+            var opts = scan(params);
+
+            var winston_stream = winston.stream({ start: -1 });
+            winston_stream.on('log', function (log) {
+                // at this point the file is supposed to created
+                winston_stream.destroy();
+                if (fs.existsSync(opts.logFile)) {
+                    done();
+                }
+            });
+        });
+        
+        it('converts single check to array', function () {
+            var scan = require('../src/app.js');
+
+            // single check name as string
+            var params = { url: "http://www.example.com", checks: "headers"};
+            var opts = scan(params);
+
+            assert(Array.isArray(opts.checks)); // string must be converted to array
+        });
+
+        it('throw error when no checks', function () {
+            var scan = require('../src/app.js');
+
+            // single check name as string
+            var params = { url: "http://www.example.com", checks : null };
+            assert.throws(function () {
+                scan(params);
+            }, Error, "Error thrown");
+
+            // checks are an object
+            params = { url: "http://www.example.com", checks: {} };
+            assert.throws(function () {
+                scan(params);
+            }, Error, "Error thrown");
+
+            // empty checks array
+            params = { url: "http://www.example.com", checks: [] };
+            assert.throws(function () {
+                scan(params);
+            }, Error, "Error thrown");
+        });
+
+        it('rejects inexistant checks', function () {
+            var scan = require('../src/app.js');
+
+            // single check name as string
+            var params = {
+                url: "http://www.example.com", checks: ["headers", "inexistant"] };
+            var opts = scan(params);
+
+            assert(opts.checks.length == 1);
+        });
+
+        it('parses url param correctly', function () {
+            var scan = require('../src/app.js');
+
+            // 1st case : no url in config, no url in params
+            var params = { url: null, checks: ["headers"] };
+            assert.throws(function () {
+                scan(params);
+            }, Error, "Error thrown");
+
+            // 2nd case : no url in config, url in params
+            try {
+                winston.remove(winston.transports.File); // reset winston transports
+            } catch (err) { }
+            params = { url: "http://www.example.com", checks: ["headers"] };
+            var opts = scan(params);
+            assert.equal("http://www.example.com", opts.url);
+
+            // 3rd case : url in config, no url in params
+            try {
+                winston.remove(winston.transports.File); // reset winston transports
+            } catch (err) { }
+            var configfile = __dirname + "/ut_data/.sitecheckrc1";
+            params = { checks: ["headers"], config: configfile };
+            opts = scan(params);
+            var json = JSON.parse(fs.readFileSync(configfile));
+            assert.equal(json.url, opts.url);
+
+            // 4th case : url in config and in params : should use the one in params
+            try {
+                winston.remove(winston.transports.File); // reset winston transports
+            } catch (err) { }
+            configfile = __dirname + "/ut_data/.sitecheckrc1";
+            params = { url: "http://www.example.com", checks: ["headers"], config: configfile };
+            opts = scan(params);
+            assert.equal("http://www.example.com", opts.url);
+
+            // invalid url
+            try {
+                winston.remove(winston.transports.File); // reset winston transports
+            } catch (err) { }
+            configfile = __dirname + "/ut_data/.sitecheckrc1";
+            params = { url: "http:/*www.example.com", checks: ["headers"], config: configfile };
+            assert.throws(function () {
+                scan(params);
+            }, Error, "Invalid url");
+        });
+        
+        it('works without log file', function () {
+            var scan = require('../src/app.js');
+            var params = { url: "http://www.example.com", checks: ["headers"], log: false };
+            var opts = scan(params);
+            assert.equal("http://www.example.com", opts.url);
+        });
+
+        it('handles invalid log level', function () {
+            var scan = require('../src/app.js');
+            var params = { url: "http://www.example.com", checks: ["headers"], log: true, loglevel: "zcee64c" };
+            var opts = scan(params);
+            assert.equal("debug", opts.loglevel);
+        });
+        
+        afterEach(function () {
+            // runs after each test in this block
+        });
+
+        after(function () {
+            // remove unit tests logs 
+            try {
+                fs.removeSync('./log');
+            } catch (err) { }
+        });
     });
-});*/
+});

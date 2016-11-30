@@ -38,9 +38,12 @@ class Check {
         this.hooks.OnRaiseIssue = [];
 
         // targetType
-        for (let t in CONSTANTS.TARGETTYPE) if (CONSTANTS.TARGETTYPE.hasOwnProperty(t)) {
-            if (CONSTANTS.TARGETTYPE[t] == targetType) {
-                this.targetType = targetType;
+        for (let t in CONSTANTS.TARGETTYPE) {
+            /* istanbul ignore else */
+            if (CONSTANTS.TARGETTYPE.hasOwnProperty(t)) {
+                if (CONSTANTS.TARGETTYPE[t] == targetType) {
+                    this.targetType = targetType;
+                }
             }
         }
         if (this.targetType === undefined || this.targetType === null) {
@@ -48,9 +51,12 @@ class Check {
         }
 
         // CheckFamily
-        for (let t in CONSTANTS.CHECKFAMILY) if (CONSTANTS.CHECKFAMILY.hasOwnProperty(t)) {
-            if (CONSTANTS.CHECKFAMILY[t] == checkFamily) {
-                this.checkFamily = checkFamily;
+        for (let t in CONSTANTS.CHECKFAMILY) {
+            /* istanbul ignore else */
+            if (CONSTANTS.CHECKFAMILY.hasOwnProperty(t)) {
+                if (CONSTANTS.CHECKFAMILY[t] == checkFamily) {
+                    this.checkFamily = checkFamily;
+                }
             }
         }
         if (this.checkFamily === undefined || this.checkFamily === null) {
@@ -64,8 +70,8 @@ class Check {
         this.requiresAuthorization = requiresAuthorization;
 
         // canRunDuringCrawling
-        if (requiresAuthorization !== false && requiresAuthorization !== true) {
-            throw new Error("Check : requiresAuthorization must be set and must be a boolean.");
+        if (canRunDuringCrawling !== false && canRunDuringCrawling !== true) {
+            throw new Error("Check : canRunDuringCrawling must be set and must be a boolean.");
         }
         this.canRunDuringCrawling = canRunDuringCrawling;
     }

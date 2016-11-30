@@ -49,6 +49,7 @@
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
     </Compile>
+    <Compile Include="test\ut_target.js" />
     <None Include=".licenseheader" />
     <Content Include=".coveralls.yml" />
     <Content Include=".travis.yml" />
@@ -69,8 +70,10 @@
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\async\" />
     <Folder Include="typings\globals\chai\" />
+    <Folder Include="typings\globals\chokidar\" />
     <Folder Include="typings\globals\commander\" />
     <Folder Include="typings\globals\config\" />
+    <Folder Include="typings\globals\fs-extra\" />
     <Folder Include="typings\globals\gulp-istanbul\" />
     <Folder Include="typings\globals\gulp-mocha\" />
     <Folder Include="typings\globals\gulp\" />
@@ -78,6 +81,7 @@
     <Folder Include="typings\globals\mocha\" />
     <Folder Include="typings\globals\moment\" />
     <Folder Include="typings\globals\node\" />
+    <Folder Include="typings\globals\randomstring\" />
     <Folder Include="typings\globals\request\" />
     <Folder Include="typings\globals\strip-json-comments\" />
     <Folder Include="typings\globals\valid-url\" />
@@ -86,8 +90,10 @@
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\chai\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\chokidar\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\commander\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\config\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\fs-extra\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp-istanbul\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp-mocha\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp\index.d.ts" />
@@ -95,6 +101,7 @@
     <TypeScriptCompile Include="typings\globals\mocha\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\randomstring\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\strip-json-comments\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\valid-url\index.d.ts" />

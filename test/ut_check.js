@@ -20,7 +20,7 @@ var Check = require('../src/check');
 const CONSTANTS = require("../src/constants.js");
 
 describe('Check class', function () {
-    it('Test OnRaiseIssue', function (done) {
+    it('OnRaiseIssue works ok', function (done) {
         var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         c.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
@@ -44,7 +44,7 @@ describe('Check class', function () {
         });
     });
 
-    it('Test check does not raise issue', function (done) {
+    it('does not raise issue on dummy check', function (done) {
         var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         var hookCalled = false;
@@ -55,5 +55,49 @@ describe('Check class', function () {
             assert.equal(hookCalled, false);
             done();
         });
+    });
+
+    it('rejects invalid target types', function () {
+        new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true); // working case
+
+        assert.throws(function () {
+            new Check(null, CONSTANTS.CHECKFAMILY.NONE, true, true);
+        }, Error, "Error thrown on case 1");
+
+        assert.throws(function () {
+            new Check(undefined, CONSTANTS.CHECKFAMILY.NONE, true, true);
+        }, Error, "Error thrown on case 2");
+
+        assert.throws(function () {
+            new Check(9999, CONSTANTS.CHECKFAMILY.NONE, true, true);
+        }, Error, "Error thrown on case 3");
+    });
+
+    it('rejects invalid check family', function () {
+        new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true); // working case
+
+        assert.throws(function () {
+            new Check(CONSTANTS.TARGETTYPE.NONE, null, true, true);
+        }, Error, "Error thrown on case 1");
+
+        assert.throws(function () {
+            new Check(CONSTANTS.TARGETTYPE.NONE, undefined, true, true);
+        }, Error, "Error thrown on case 2");
+
+        assert.throws(function () {
+            new Check(CONSTANTS.TARGETTYPE.NONE, 9999, true, true);
+        }, Error, "Error thrown on case 3");
+    });
+
+    it('ensures ctor parameters correctly', function () {
+        new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true); // working case
+
+        assert.throws(function () {
+            new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, null, true);
+        }, Error, "Error thrown on case 1");
+
+        assert.throws(function () {
+            new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, null);
+        }, Error, "Error thrown on case 2");
     });
 });

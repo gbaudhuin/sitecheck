@@ -42,7 +42,7 @@ module.exports = Object.freeze({
         /**
         * Check is done on the server network.
         */
-        NETWORJ: 4,
+        NETWORK: 4,
 
         /**
         * Check is done on the server as a whole.

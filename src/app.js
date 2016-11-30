@@ -21,8 +21,13 @@ var valid_url = require("valid-url");
 var winston = require("winston");
 const url = require('url');
 
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.Console, {
+    handleExceptions: true, humanReadableUnhandledException: true
+});
+
 // Default parameters for sitecheck. defaults are merged, not replaced.
-var defaultParams = {
+let defaultParams = {
     allPages: false,
     checks: [
         "headers"
@@ -43,9 +48,19 @@ var defaultParams = {
  */
 function scan(params) {
     var opts = require('rc')("sitecheck", defaultParams, params);
-    // make sur "checks" field is an array
-    if (opts.checks.constructor !== Array) {
+
+    // make sure "checks" field is an array
+    if (typeof opts.checks === 'string' || opts.checks instanceof String) {
         opts.checks = [opts.checks];
+    }
+
+    if (opts.checks.constructor !== Array) {
+        throw new Error("No checks. At least one check must be set to start scan. Operation canceled.");
+    }
+
+    // checks
+    if (!opts.checks || opts.checks.length < 1) {
+        throw new Error("No checks. At least one check must be set to start scan. Operation canceled.");
     }
 
     // check url
@@ -60,17 +75,6 @@ function scan(params) {
     var uri = new url.parse(opts.url);
 
     // log system
-    if (opts.log) {
-        var logdir = './log/';
-        if (!fs.existsSync(logdir)) {
-            fs.mkdirSync(logdir);
-        }
-        var moment = require("moment");
-        var logfilename = logdir + uri.hostname.replace(/\./, "_") + "_" + moment.utc().format('YYMMDDHHmmss') + ".log";
-        winston.add(winston.transports.File, {
-            filename: logfilename, handleExceptions: true
-        });
-    }
     var possibleLogLevels = ["error", "warn", "info", "verbose", "debug", "silly"];
     var foundLogLevel = false;
     for (let i = 0; i < possibleLogLevels.length; i++) {
@@ -82,23 +86,31 @@ function scan(params) {
     if (!foundLogLevel) {
         winston.level = "debug";
         winston.warn("Incorrect log level \"" + opts.loglevel + "\" specified. Log level was set to 'debug'.");
+        opts.loglevel = winston.level;
     }
 
-    winston.warn(opts.url);
-
-    // checks
-    if (!opts.checks) {
-        throw new Error("No checks. At least one check must be set to start scan. Operation canceled.");
+    if (opts.log) {
+        var logdir = './log/';
+        if (!fs.existsSync(logdir)) {
+            fs.mkdirSync(logdir);
+        }
+        var moment = require("moment");
+        var logfilename = logdir + uri.hostname.replace(/\./, "_") + "_" + moment.utc().format('YYMMDDHHmmss') + ".log";
+        winston.add(winston.transports.File, {
+            filename: logfilename, handleExceptions: true, humanReadableUnhandledException: true, level: winston.level
+        });
+        opts.logFile = logfilename;
     }
 
     // verify check names
     var verified_checks = [];
     for (let i in opts.checks) {
+        /* istanbul ignore else */
         if (opts.checks.hasOwnProperty(i)) {
             let name = opts.checks[i];
             let name_filtered = name.replace(/[^a-zA-Z0-9_]/g, '');
             if (name_filtered !== name) {
-                winston.warning("Invalid check name\"" + name + "\". This check won't be run.");
+                winston.warn("Invalid check name '" + name + "'. Check names can only contain [a-zA-Z0-9_] characters. Skipped.");
             }
             else {
                 let found = false;
@@ -106,16 +118,21 @@ function scan(params) {
 
                 for (let j in check_paths) if (!found && check_paths.hasOwnProperty(j)) {
                     var p = check_paths[j];
-
-                    if (!found && fs.existsSync(__dirname + "/" + p + name + ".js")) {
+                    if (!found && fs.existsSync(__dirname + "/" + p + "check_" + name + ".js")) {
                         verified_checks.push(name);
                         found = true;
                     }
+                }
+
+                if (!found) {
+                    winston.warn("Invalid check name '" + name + "'. Could not find 'check_" + name + ".js'. Skipped.");
                 }
             }
         }
     }
     opts.checks = verified_checks;
+
+    return opts;
 }
 
 module.exports = scan;

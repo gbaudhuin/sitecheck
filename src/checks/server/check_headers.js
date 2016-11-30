@@ -28,14 +28,14 @@ module.exports = class CheckHeaders extends Check {
 
     _check() {
         var self = this;
-        var timeout = 30000;
+        var timeout = 1000;
         return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
                 if (err) {
                     if (err.code === "ESOCKETTIMEDOUT") {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
+                        winston.warn("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
                     } else {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + "ms)");
+                        winston.warn("CheckHeaders : no response from '" + self.target.uri + "'. Unknown error (" + err.code + "ms)");
                     }
                 } else {
                     if (!res.headers['x-frame-options']) {

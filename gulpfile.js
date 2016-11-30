@@ -8,7 +8,7 @@ var istanbul = require('gulp-istanbul');
 var coveralls = require('gulp-coveralls');
 
 gulp.task('lint', function () {
-    return gulp.src(['src/**/*.js', 'bin/*.js'])
+    return gulp.src(['src/**/*.js', 'bin/*.js', 'test/**/ut_*.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'))
 		.pipe(jshint.reporter('fail'));
