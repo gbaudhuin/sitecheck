@@ -17,7 +17,7 @@
 "use strict";
 
 var Check = require('../../check');
-var request = require('request');
+var request = require('../../requestwrapper');
 var winston = require('winston');
 const CONSTANTS = require("../../constants.js");
 
@@ -42,7 +42,7 @@ module.exports = class CheckHeaders extends Check {
                         self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.url + "'", true);
                     }
                 }
-
+                
                 resolve(); // checks always call resolve
             });
         });

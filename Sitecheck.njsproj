@@ -33,7 +33,7 @@
     <Compile Include="bin\cli.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="src\app.js" />
-    <Compile Include="requestwrapper.js" />
+    <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\check_headers.js" />
     <Compile Include="src\target.js" />
@@ -47,6 +47,9 @@
     </Compile>
     <Compile Include="test\ut_check.js">
       <SubType>Code</SubType>
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
+    <Compile Include="test\ut_requestwrapper.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_target.js" />
