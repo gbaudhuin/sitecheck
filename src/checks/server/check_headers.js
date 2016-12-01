@@ -28,7 +28,7 @@ module.exports = class CheckHeaders extends Check {
 
     _check() {
         var self = this;
-        var timeout = 30000;
+        var timeout = 2000;
         return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
                 if (err) {

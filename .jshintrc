@@ -7,5 +7,6 @@
   "unused":"vars",
   "strict":"global",
   "node": true,
-  "mocha":true
+  "mocha":true,
+  "expr": true
 }

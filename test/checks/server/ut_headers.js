@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var assert = require('assert');
+
+'use strict';
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
-var request = require('request');
 var expect = require('chai').expect;
 
 var server = http.createServer(function (req, res) {
@@ -27,10 +27,13 @@ var server = http.createServer(function (req, res) {
         res.end();
     } else if (req.url == '/xframeoptions_ko') {
         res.end();
+    } else if (req.url == '/xframeoptions_with_timeout') {
+        setTimeout(function () {
+            res.end();
+        }, 3000);
     } else {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
         res.end('wrong request');
-    };
+    }
 });
 
 describe('checks/server/check_headers.js', function () {
@@ -39,6 +42,7 @@ describe('checks/server/check_headers.js', function () {
     });
 
     it('detect missing X-Frame-Options headers', function (done) {
+        this.timeout(10000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers();
         var issueRaised = false;
@@ -52,12 +56,20 @@ describe('checks/server/check_headers.js', function () {
                 check.check(new Target('http://localhost:8000/xframeoptions_ko', "", CONSTANTS.TARGETTYPE.SERVER))
                     .then(function () {
                         expect(issueRaised).to.be.true;
-                        done();
+                        check.check(new Target('http://localhost:8002/xframeoptions_with_unknown_error', "", CONSTANTS.TARGETTYPE.SERVER))
+                            .then(function () {
+                                expect(issueRaised).to.be.true;
+                                check.check(new Target('http://localhost:8000/xframeoptions_with_timeout', "", CONSTANTS.TARGETTYPE.SERVER))
+                                    .then(function () {
+                                        expect(issueRaised).to.be.true;
+                                        done();
+                                    });
+                            });
                     });
             });
-    });
 
-    after(function () {
-        server.close();
+        after(function () {
+            server.close();
+        });
     });
 });
