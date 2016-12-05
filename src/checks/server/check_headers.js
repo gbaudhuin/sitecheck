@@ -35,7 +35,7 @@ module.exports = class CheckHeaders extends Check {
                     if (err.code === "ESOCKETTIMEDOUT") {
                         winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
                     } else {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + "ms)");
+                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + ")");
                     }
                 } else {
                     if (!res.headers['x-frame-options']) {

@@ -31,6 +31,9 @@ module.exports = class CheckCSRF extends Check {
     this._body = "";
     this._tokenName = "";
     this._token = "";
+    this._token2 = "";
+    this._body2 = "";
+    this._form2 = "";
     this._usernameInput = "";
     this._submitButton = "";
     this._passwordInput = "";
@@ -56,77 +59,91 @@ module.exports = class CheckCSRF extends Check {
 
   _check() {
     var self = this;
-    var timeout = 30000;
+    var timeout = 2000;
     return new Promise((resolve, reject) => {
       request.get({ url: self.target.uri, timeout: timeout }, (err, res, body) => {
         if (err) {
-          console.log('error');
           if (err.code === "ESOCKETTIMEDOUT") {
             winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
           } else {
-            winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + "ms)");
+            winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + ")");
           }
         } else {
           self._body = body;
-          self.checkIfPageHaveAForm(res, resolve, self);
+          return self.checkIfPageHasAForm(res).then(() => {
+            return self.checkIfFormIsAConnectionForm(res).then(() => {
+              return self.checkIfFormHasAnHiddenInput(res).then(() => {
+                return self.checkIfFormContainsToken(res).then(() => {
+                  return self.checkIfTokenChanges(res).then(() => {
+                    return self.checkEntropy(res).then(() => {
+                      resolve();
+                    });
+                  });
+                });
+              });
+            });
+          });
         }
+        resolve();
       });
     });
   }
 
-  checkIfPageHaveAForm(res, resolve, self) {
-    let $ = cheerio.load(self._body);
-    $('form').each(function () {
-      if ($(this).find('input[type=submit],button[type=submit],button[type=button]').length > 0) {
-        self._form = $(this).html();
-        self._formAction = $(this).attr('action');
-        return self.checkIfFormIsAConnectionForm(res, resolve, self);
+
+  checkIfPageHasAForm(res) {
+    return new Promise((resolve, reject) => {
+      let self = this;
+      if (self._body.indexOf('<form') !== -1) {
+        let $ = cheerio.load(self._body);
+        $('form').each(function () {
+          if ($(this).find('input[type=submit],button[type=submit],button[type=button]').length > 0) {
+            self._form = $(this).html();
+            self._formAction = $(this).attr('action');
+          }
+        });
       }
-      else {
-        return resolve();
-      }
+      resolve();
     });
   }
 
-  checkIfFormHaveAnHiddenInput(res, resolve, self) {
-    let $ = cheerio.load(self._form);
-    let input = $('input[type="hidden"]');
-    if (input.length === 0) {
-      self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + res.url + "' does not have any hidden input", true);
-      return resolve();
-    }
-    else {
-      return self.checkIfFormContainToken(res, resolve, self);
-    }
+  checkIfFormHasAnHiddenInput(res) {
+    return new Promise((resolve, reject) => {
+      let self = this;
+      let $ = cheerio.load(self._form);
+      let input = $('input[type="hidden"]');
+      if (input.length === 0) {
+        self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + res.url + "' does not have any hidden input", true);
+      }
+      resolve();
+    });
   }
 
-  checkIfFormContainToken(res, resolve, self) {
-    let $ = cheerio.load(self._form);
-    var found = false;
-    $('input[type="hidden"]').each(function () {
-      let input = $(this);
-      self._COMMON_CSRF_NAMES.forEach((name) => {
-        if (input.attr('name') == name) {
-          self._token = input.prop('value');
-          self._tokenName = name;
-          return self.checkIfTokenChange(res, resolve, self);
+  checkIfFormContainsToken(res) {
+    return new Promise((resolve, reject) => {
+      let self = this;
+      let $ = cheerio.load(self._form);
+      let found = false;
+      $('input[type="hidden"]').each(function () {
+        let input = $(this);
+        self._COMMON_CSRF_NAMES.forEach((name) => {
+          if (input.attr('name') == name) {
+            self._token = input.prop('value');
+            self._tokenName = name;
+            found = true;
+          }
+        });
+        if (found === false) {
+          self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + res.url + "' does not have a CSRF Token", true);
         }
       });
-
-      if (found === false) {
-        self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + res.url + "' does not have a CSRF Token", true);
-        return resolve();
-      }
+      resolve();
     });
   }
 
-  checkIfTokenChange(res, resolve, self) {
-    request.get({ url: self.target.uri, timeout: 5000 }, (err, res, body) => {
-      if (err) {
-        self._raiseIssue("CSRF_Token_Warning.xml", null, "Page was not reachable at Url '" + res.url + "'", true);
-        return resolve();
-      }
-      else {
+  checkIfTokenChanges(res) {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      request.get({ url: self.target.uri, timeout: 2000 }, (err, res, body) => {
         self._body2 = body;
         let $ = cheerio.load(body);
         let form = $('form');
@@ -135,82 +152,62 @@ module.exports = class CheckCSRF extends Check {
           let input = $('input[type="hidden"][name=' + self._tokenName + ']');
           if (self._token != input.attr('value') && input.attr('value') !== undefined) {
             self._token2 = input.attr('value');
-            return self.checkEntropy(res, resolve, self);
+            resolve();
           }
           else {
-            console.log('error');
-            self._raiseIssue("CSRF_Token_Warning.xml", null, "Token doesn\'t change for each session at Url '" + res.url + "' this may be a security issue", true);
+            self._raiseIssue("CSRF_Token_Warning.xml", null, "Token doesn\'t changes for each session at Url '" + res.url + "' this may be a security issue", true);
             resolve();
           }
         }
-      }
+        else {
+          resolve();
+        }
+      });
     });
   }
 
-  checkEntropy(res, resolve, self) {
-    let entropyFirstToken = 0;
-    let entropySecondToken = 0;
-    for (let x = 0; x < 256; x++) {
-      let char = String.fromCharCode(x);
-      let count = self._token.split(char).length - 1;
-      let p_x = parseFloat(count) / self._token.length;
-      if (p_x > 0) {
-        entropyFirstToken += - p_x * Math.log2(p_x);
+  checkEntropy(res) {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      let entropyFirstToken = 0;
+      let entropySecondToken = 0;
+      for (let x = 0; x < 256; x++) {
+        let char = String.fromCharCode(x);
+        let count = self._token.split(char).length - 1;
+        if (self._token.length > 0) {
+          let p_x = parseFloat(count) / self._token.length;
+          if (p_x > 0) {
+            entropyFirstToken += - p_x * Math.log2(p_x);
+          }
+        }
       }
-    }
-    for (let x = 0; x < 256; x++) {
-      let char = String.fromCharCode(x);
-      let count = self._token2.split(char).length - 1;
-      let p_x = parseFloat(count) / self._token.length;
-      if (p_x > 0) {
-        entropySecondToken += - p_x * Math.log2(p_x);
+      for (let x = 0; x < 256; x++) {
+        let char = String.fromCharCode(x);
+        let count = self._token2.split(char).length - 1;
+        if (self._token2.length > 0) {
+          let p_x = parseFloat(count) / self._token2.length;
+          if (p_x > 0) {
+            entropySecondToken += - p_x * Math.log2(p_x);
+          }
+        }
       }
-    }
-    if (entropyFirstToken > 2.4 && entropySecondToken > 2.4) {
-      return resolve();
-    }
-    else if (entropyFirstToken > 2.4 || entropySecondToken > 2.4) {
-      self._raiseIssue("CSRF_Token_Warning.xml", null, "One of the CSRF tokens was secured but others weren\'t necessarily at Url '" + res.url + "' , this can be a security breach, consider to change that ", true);
-      return resolve();
-    }
-    else {
-      self._raiseIssue("CSRF_Token_Warning.xml", null, "CSRF tokens aren\'t secured consider changing them to secured one at Url '" + res.url + "'", true);
-      return resolve();
-    }
+      if (entropyFirstToken < 2.4 || entropySecondToken < 2.4) {
+        self._raiseIssue("CSRF_Token_Warning.xml", null, "CSRF tokens aren\'t secured consider changing them to secured one at Url '" + res.url + "'", true);
+      }
+      resolve();
+    });
   }
 
-  checkIfFormIsAConnectionForm(res, resolve, self) {
-    let $ = cheerio.load(this._form);
-    if (($('input[type=text],input[type=email]').length > 0) && ($('input[type=password]').length > 0) && ($('input[type=submit],button[type=submit],button[type=button]').length > 0)) {
-      self._usernameInput = $('input[type=text],input[type=email]').attr('name');
-      self._passwordInput = $('input[type=password]').attr('name');
-      self._submitButton = $('input[type=submit],button[type=submit]').attr('value');
-      return self.checkIfFormHaveAnHiddenInput(res, resolve, self);
-    }
-    else {
-      return resolve();
-    }
+  checkIfFormIsAConnectionForm(res) {
+    return new Promise((resolve, reject) => {
+      let self = this;
+      let $ = cheerio.load(this._form);
+      if (($('input[type=text],input[type=email]').length > 0) && ($('input[type=password]').length > 0) && ($('input[type=submit],button[type=submit],button[type=button]').length > 0)) {
+        self._usernameInput = $('input[type=text],input[type=email]').attr('name');
+        self._passwordInput = $('input[type=password]').attr('name');
+        self._submitButton = $('input[type=submit],button[type=submit]').attr('value');
+      }
+      resolve();
+    });
   }
 };
-
-
-/*
-var found = false;
-            let $ = cheerio.load(this._body);
-            $('form').each((index, element) => {
-                if ($(this).find('input[type=submit],button[type=submit],button[type=button]').length > 0) {
-                    self._form = $(this).html();
-                    self._formAction = $(this).attr('action');
-                    if (($(this).find('input[type=text], input[type=email]').length > 0) && ($('input[type=password]').length > 0) && ($('input[type=submit],button[type=submit],button[type=button]').length > 0)) {
-                        self._usernameInput = $('input[type=text],input[type=email]').attr('name');
-                        self._passwordInput = $('input[type=password]').attr('name');
-                        
-                        found = true;
-                    }
-                }
-            });
-            if (found === false) {
-                logger.log('error', colors.red.bold('✘ ') + 'This page doesn\'t contain a form');
-                
-            }
-            */
