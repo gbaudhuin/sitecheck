@@ -1,0 +1,7 @@
+﻿{
+  // checks to run
+  "checks": [
+	"headers"
+  ],
+  "allPages":false
+}
