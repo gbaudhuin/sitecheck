@@ -33,11 +33,15 @@
     <Compile Include="bin\cli.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="src\app.js" />
+    <Compile Include="src\checks\server\check_csrf.js" />
     <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\check_headers.js" />
     <Compile Include="src\target.js" />
     <Compile Include="src\constants.js" />
+    <Compile Include="test\checks\server\ut_csrf.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\checks\server\ut_headers.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
@@ -73,6 +77,7 @@
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\async\" />
     <Folder Include="typings\globals\chai\" />
+    <Folder Include="typings\globals\cheerio\" />
     <Folder Include="typings\globals\chokidar\" />
     <Folder Include="typings\globals\commander\" />
     <Folder Include="typings\globals\config\" />
@@ -93,6 +98,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\chai\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\cheerio\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\chokidar\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\commander\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\config\index.d.ts" />

@@ -20,7 +20,6 @@ var Check = require('../../check');
 var request = require('request');
 var winston = require('winston');
 var cheerio = require('cheerio');
-//var Q = require('q');
 const CONSTANTS = require("../../constants.js");
 
 module.exports = class CheckCSRF extends Check {
@@ -89,6 +88,7 @@ module.exports = class CheckCSRF extends Check {
   }
 
   checkIfFormHaveAnHiddenInput(res, resolve, self) {
+      var b = this;
     let $ = cheerio.load(self._form);
     let input = $('input[type="hidden"]');
     if (input.length === 0) {

@@ -45,16 +45,17 @@
     "penetration testing"
   ],
   "dependencies": {
-    "async": "^2.1.2",
-    "fs-extra": "^1.0.0",
+    "async": "^2.1.4",
     "cheerio": "^0.22.0",
+    "fs-extra": "^1.0.0",
     "is-relative-url": "^2.0.0",
     "meow": "^3.7.0",
     "minimist": "^1.2.0",
-    "moment": "^2.17.0",
+    "mocha": "^3.2.0",
+    "moment": "^2.17.1",
     "randomstring": "^1.1.5",
     "rc": "^1.1.6",
-    "request": "^2.76.0",
+    "request": "^2.79.0",
     "valid-url": "^1.0.9",
     "winston": "^2.3.0"
   },
