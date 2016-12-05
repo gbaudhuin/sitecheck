@@ -64,11 +64,11 @@ function Token() {
 }
 
 describe('checks/server/check_csrf.js', function () {
-    this.timeout(10000);
+    this.timeout(3000);
     before(() => {
         server.listen(8000);
     });
-    it('detect missing CSRF token', (done) => {
+    it('detects missing CSRF token', (done) => {
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
         var check = new check_csrf();
         var issueRaised = false;
@@ -123,25 +123,25 @@ describe('checks/server/check_csrf.js', function () {
                                                                 expect(issueRaised).to.be.true;
                                                                 done();
                                                             }).catch((err) => {
-                                                                done();
+                                                                done(err);
                                                             });
                                                     }).catch((err) => {
-                                                        done();
+                                                        done(err);
                                                     });
                                             }).catch((err) => {
-                                                done();
+                                                done(err);
                                             });
                                     }).catch((err) => {
-                                        done();
+                                        done(err);
                                     });
                             }).catch((err) => {
-                                done();
+                                done(err);
                             });
                     }).catch((err) => {
-                        done();
+                        done(err);
                     });
             }).catch((err) => {
-                done();
+                done(err);
             });
     });
     after(() => {
