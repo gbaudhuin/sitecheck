@@ -16,14 +16,12 @@
  */
 "use strict";
 
-var assert = require('assert');
 //var request = require('../src/requestwrapper.js');
 var request = require('request');
 var fs = require('fs-extra');
-var randomstring = require("randomstring");
 //request = request.defaults({ jar: true })
 describe('auth', function () {
-    it.only('is ok', function (done) {
+    it('is ok', function (done) {
         this.timeout(15000);
         request.get({ url: "https://twitter.com/", timeout: 1000, jar : true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {
@@ -79,5 +77,6 @@ describe('auth', function () {
                 });
             }
         });
+        done();
     });
 });
