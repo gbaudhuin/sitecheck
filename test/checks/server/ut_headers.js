@@ -106,10 +106,9 @@ describe('checks/server/check_headers.js', function () {
                                 try {
                                     fs.unlinkSync("ut.log");
                                 } catch (e) { }
-
-                                done();
                             }
                         });
+                        done();
                     });
             });
     });

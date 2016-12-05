@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* jshint expr: true */
+
+/*jshint expr: true*/
 'use strict';
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
@@ -27,16 +28,25 @@ var server = http.createServer(function (req, res) {
         res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + Token() + '"/></form>');
     } else if (req.url == '/no_form') {
-        res.end();
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<li></li>');
     } else if (req.url == '/no_connection_form') {
+        res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form></form>');
     } else if (req.url == '/no_hidden') {
+        res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/></form>');
     } else if (req.url == '/no_csrf_token') {
+        res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/><input type="hidden" name="not_found" value="' + Token() + '"/></form>');
-    } else {
+    } else if (req.url == '/timeout_occured') {
+        setTimeout(() => {
+            res.end();
+        }, 3000);
+    }
+    else {
         res.end('wrong request');
     }
 });
@@ -53,9 +63,10 @@ function Token() {
     return token();
 }
 
-describe('checks/server/check_csrf.js', () => {
+describe('checks/server/check_csrf.js', function () {
+    this.timeout(10000);
     before(() => {
-        server.listen(8001);
+        server.listen(8000);
     });
     it('detect missing CSRF token', (done) => {
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
@@ -64,33 +75,76 @@ describe('checks/server/check_csrf.js', () => {
         check.setHook("OnRaiseIssue", function () {
             issueRaised = true;
         });
-        check.check(new Target('http://localhost:8001/csrf_ok', "", CONSTANTS.TARGETTYPE.SERVER))
+        check.check(new Target('http://localhost:8000/csrf_ok', "", CONSTANTS.TARGETTYPE.SERVER))
             .then(() => {
                 expect(issueRaised).to.be.false;
                 issueRaised = false;
-                check.check(new Target('http://localhost:8001/no_form', "", CONSTANTS.TARGETTYPE.SERVER))
+                check = new check_csrf();
+                check.setHook("OnRaiseIssue", function () {
+                    issueRaised = true;
+                });
+                check.check(new Target('http://localhost:8000/no_form', "", CONSTANTS.TARGETTYPE.SERVER))
                     .then(() => {
                         expect(issueRaised).to.be.true;
-                        check.check(new Target('http://localhost:8001/no_connection_form', "", CONSTANTS.TARGETTYPE.SERVER))
+                        check = new check_csrf();
+                        check.setHook("OnRaiseIssue", function () {
+                            issueRaised = true;
+                        });
+                        check.check(new Target('http://localhost:8000/no_connection_form', "", CONSTANTS.TARGETTYPE.SERVER))
                             .then(() => {
                                 expect(issueRaised).to.be.true;
-                                check.check(new Target('http://localhost:8001/no_hidden', "", CONSTANTS.TARGETTYPE.SERVER))
+                                check = new check_csrf();
+                                check.setHook("OnRaiseIssue", function () {
+                                    issueRaised = true;
+                                });
+                                check.check(new Target('http://localhost:8000/no_hidden', "", CONSTANTS.TARGETTYPE.SERVER))
                                     .then(() => {
                                         expect(issueRaised).to.be.true;
-                                        check.check(new Target('http://localhost:8001/no_csrf_token', "", CONSTANTS.TARGETTYPE.SERVER))
+                                        check = new check_csrf();
+                                        check.setHook("OnRaiseIssue", function () {
+                                            issueRaised = true;
+                                        });
+                                        check.check(new Target('http://localhost:8001/not_reachable', "", CONSTANTS.TARGETTYPE.SERVER))
                                             .then(() => {
                                                 expect(issueRaised).to.be.true;
+                                                check = new check_csrf();
+                                                check.setHook("OnRaiseIssue", function () {
+                                                    issueRaised = true;
+                                                });
+                                                check.check(new Target('http://localhost:8000/no_csrf_token', "", CONSTANTS.TARGETTYPE.SERVER))
+                                                    .then(() => {
+                                                        expect(issueRaised).to.be.true;
+                                                        check = new check_csrf();
+                                                        check.setHook("OnRaiseIssue", function () {
+                                                            issueRaised = true;
+                                                        });
+                                                        check.check(new Target('http://localhost:8000/timeout_occured', "", CONSTANTS.TARGETTYPE.SERVER))
+                                                            .then(() => {
+                                                                expect(issueRaised).to.be.true;
+                                                                done();
+                                                            }).catch((err) => {
+                                                                done();
+                                                            });
+                                                    }).catch((err) => {
+                                                        done();
+                                                    });
+                                            }).catch((err) => {
                                                 done();
                                             });
+                                    }).catch((err) => {
+                                        done();
                                     });
+                            }).catch((err) => {
+                                done();
                             });
+                    }).catch((err) => {
+                        done();
                     });
-            })
-            /*.catch((err) => {
+            }).catch((err) => {
                 done();
-            })*/;
-        after(() => {
-            server.close();
-        });
-    }).timeout(20000);
+            });
+    });
+    after(() => {
+        server.close();
+    });
 });
