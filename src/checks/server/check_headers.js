@@ -17,7 +17,7 @@
 "use strict";
 
 var Check = require('../../check');
-var request = require('request');
+var request = require('../../requestwrapper');
 var winston = require('winston');
 const CONSTANTS = require("../../constants.js");
 
@@ -28,12 +28,12 @@ module.exports = class CheckHeaders extends Check {
 
     _check() {
         var self = this;
-        var timeout = 2000;
+        var timeout = 1000;
         return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
                 if (err) {
                     if (err.code === "ESOCKETTIMEDOUT") {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
+                        winston.warn("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
                     } else {
                         winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + ")");
                     }
@@ -42,7 +42,7 @@ module.exports = class CheckHeaders extends Check {
                         self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.url + "'", true);
                     }
                 }
-
+                
                 resolve(); // checks always call resolve
             });
         });
