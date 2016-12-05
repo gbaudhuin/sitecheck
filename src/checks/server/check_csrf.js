@@ -255,6 +255,7 @@ testConnection(res) {
                 });
             }
         });
+        resolve();
     });
 }
 
