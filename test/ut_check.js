@@ -18,41 +18,15 @@
 var assert = require('assert');
 var Check = require('../src/check');
 const CONSTANTS = require("../src/constants.js");
+var CancellationToken = require('../src/cancellationToken.js');
 
 describe('Check class', function () {
-    it('OnRaiseIssue works ok', function (done) {
+    it('does not raise issue on empty check', function (done) {
         var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
-        c.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
-            assert.ok(errorContent == "errorContent", "This shouldn't fail");
-            done();
-        });
-
-        c._raiseIssue("ref", "positionIdentifier", "errorContent", "maybeFalsePositive");
-    });
-
-    it('does not allow bad labels on setHook function call', function (done) {
-        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
-
-        var hookCalled = false;
-        c.setHook("OnRaiseIssue_badlabel", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
-            hookCalled = true;
-        });
-        c.check().then(function () {
-            assert.equal(hookCalled, false);
-            done();
-        });
-    });
-
-    it('does not raise issue on dummy check', function (done) {
-        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
-
-        var hookCalled = false;
-        c.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
-            hookCalled = true;
-        });
-        c.check().then(function () {
-            assert.equal(hookCalled, false);
+        var ct = new CancellationToken();
+        c.check(ct).then((issues) => {
+            assert(!issues);
             done();
         });
     });

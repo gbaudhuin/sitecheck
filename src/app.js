@@ -20,6 +20,7 @@ var fs = require("fs");
 var valid_url = require("valid-url");
 var winston = require("winston");
 var Target = require('./target.js');
+var CancellationToken = require('./cancellationToken.js');
 const url = require('url');
 
 winston.remove(winston.transports.Console);
@@ -60,24 +61,30 @@ function scan(opts) {
     var t = new Target(params.url, scanId, CONSTANTS.TARGETTYPE.SERVER);
     targets.push(t);
 
+    var ct = new CancellationToken();
+
     for (let target of params) {
-        checkTarget(target);
+        checkTarget(target, params, ct);
     }
 }
 
-function checkTarget(target, params) {
+function checkTarget(target, params, cancellationToken) {
     var running_checks = [];
     for (let checkName of params.checks) {
         var Check = require(checkMap(checkName));
-        var check = new Check();
+        var check = new Check(target);
         if (check.targetType == target.targetType) {
-            running_checks.push(check.check(target));
+            running_checks.push(check.check(cancellationToken));
         }
     }
 
     // Wait until all checks are done.
     // Concurrency level can be managed by request option "pool: {maxSockets: Infinity}" (https://github.com/request/request#requestoptions-callback)
-    Promise.all(running_checks);
+    Promise.all(running_checks).then(() => {
+
+    }).catch((err) => {
+
+    });
 }
 
 /**

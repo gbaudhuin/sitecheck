@@ -16,6 +16,7 @@
  */
 "use strict";
 const CONSTANTS = require("./constants.js");
+var Issue = require("./issue.js");
 
 /**
  * Base class of checks; All checks classes must derive from this class.
@@ -32,12 +33,12 @@ class Check {
      *                                           If a check does not need to access full crawling results, this property is set to true so it can be run during crawling.
      *                                           This has 2 advantages : scan will be faster and the user will get more feedback during crawl.
      *                                           Advice : if a check never uses Scan.Targets, this value should be True.
-     * @param {Target} target - Target to check.
+     * @param {Target} target - Target to check with this instance.
      */
     constructor(targetType, checkFamily, requiresAuthorization, canRunDuringCrawling, target) {
-        this.hooks = [];
-        this.hooks.OnRaiseIssue = [];
+        this.issues = [];
         this.target = target;
+
         // targetType
         for (let t in CONSTANTS.TARGETTYPE) {
             /* istanbul ignore else */
@@ -77,12 +78,6 @@ class Check {
         this.canRunDuringCrawling = canRunDuringCrawling;
     }
 
-    setHook(_CheckHookEnum, callback) {
-        if (_CheckHookEnum == "OnRaiseIssue") {
-            this.hooks.OnRaiseIssue.push(callback);
-        }
-    }
-
     /**
      * Helper function used by checks to raise an issue.
      * @access protected
@@ -101,10 +96,8 @@ class Check {
                                             Only checks that are 100% sure to be true positives  in any case should set this value to false.
      */
     _raiseIssue(ref, positionIdentifier, errorContent, maybeFalsePositive) {
-        for (var i = 0; i < this.hooks.OnRaiseIssue.length; i++) {
-            let callback = this.hooks.OnRaiseIssue[i];
-            callback(ref, positionIdentifier, errorContent, maybeFalsePositive);
-        }
+        var issue = new Issue(ref, positionIdentifier, errorContent, maybeFalsePositive);
+        this.issues.push(issue);
     }
 
     /**
@@ -113,7 +106,19 @@ class Check {
      * @param {CancellationToken} cancellationToken - The cancellation token.
      */
     check(cancellationToken) {
-        return this._check(cancellationToken);
+        return new Promise((resolve, reject) => {
+            cancellationToken.register(() => {
+                reject(new Error("ECANCELED"));
+            });
+
+            this._check(cancellationToken).then(() => {
+                if (this.issues.length > 0)
+                    resolve(this.issues);
+                else resolve();
+            }).catch((e) => {
+                reject(e);
+            });
+        });
     }
 
     /**
