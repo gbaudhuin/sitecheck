@@ -33,7 +33,9 @@
     <Compile Include="bin\cli.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="src\app.js" />
+    <Compile Include="src\cancellationToken.js" />
     <Compile Include="src\checks\server\check_csrf.js" />
+    <Compile Include="src\issue.js" />
     <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\check_headers.js" />

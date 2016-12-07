@@ -29,7 +29,7 @@ function CancellationToken(parentToken) {
                 resolve(e);
             }
             else {
-                var err = new Error("cancelled");
+                var err = new Error("ECANCELED");
                 err.cancelled = true;
                 resolve(err);
             }

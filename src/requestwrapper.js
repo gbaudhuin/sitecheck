@@ -20,6 +20,7 @@
 * - counts requests
 * - activates gzip compression/decompression by default
 * - logs requests
+* - make request cancellable with new option "cancellationToken" (see cancellationToken.js)
 * - todo : cache system
 * This module intercepts require('request') statements via nodejs's module cache system.
 * Code using 'request' does not change and should still declare require('request').
@@ -55,7 +56,7 @@ function request(uri, options, callback) {
         cb(err, res, body);
     }
     // change gzip param default behavior. Default is now true.
-    
+
     if (params.gzip === false || params.gzip === 0) {
         params.gzip = false;
     } else {
@@ -69,7 +70,16 @@ function request(uri, options, callback) {
 
     request.requestCount++;
 
-    return new request_orig.Request(params);
+    // if a cancellation token exists, register r.abort() to it.
+    var r = new request_orig.Request(params);
+    if (params.cancellationToken) {
+        params.cancellationToken.register(() => {
+            r.abort();
+            params.callback(new Error("ECANCELED : request aborted"));
+        });
+    }
+
+    return r;
 }
 
 /* istanbul ignore next */ // not our code

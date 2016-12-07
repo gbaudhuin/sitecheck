@@ -30,7 +30,7 @@ module.exports = class CheckHeaders extends Check {
         var self = this;
         var timeout = 3000;
         return new Promise(function (resolve, reject) {
-            let r = request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
+            request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
                 if (!err) {
                     if (!res.headers['x-frame-options']) {
                         self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
@@ -38,12 +38,6 @@ module.exports = class CheckHeaders extends Check {
                 }
                 resolve(); // checks always call resolve
             });
-            if (cancellationToken) {
-                cancellationToken.register(() => {
-                    r.abort();
-                    reject();
-                });
-            }
         });
     }
 };

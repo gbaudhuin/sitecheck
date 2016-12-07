@@ -55,26 +55,37 @@ describe('checks/server/check_headers.js', function () {
     it('detects missing X-Frame-Options headers', function (done) {
         this.timeout(2000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
-        var check = new check_headers();
-        var issueRaised = false;
-        check.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
-            issueRaised = true;
-        });
+
         var ct = new cancellationToken();
-        check.check(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER), ct)
+
+        var check1 = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+        var check2 = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+
+        let p1 = new Promise(function (resolve, reject) {
+            check1.check(ct).then((issues) => {
+                if (issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        let p2 = new Promise(function (resolve, reject) {
+            check2.check(ct).then((issues) => {
+                if (!issues) reject(new Error("expected issue not raised"));
+                else resolve();
+            });
+        });
+
+        Promise.all([p1, p2])
             .then(() => {
-                expect(issueRaised).to.be.false;
-                issueRaised = false;
-                return check.check(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER), ct);
-            })
-            .then(() => {
-                expect(issueRaised).to.be.true;
                 done();
             })
-            .catch((err) => {
-                done(err);
+            .catch(() => {
+                done(new Error('fail'));
             });
     });
+
     it('is cancellable', function (done) {
         this.timeout(15000);
         var check_headers = require('../../../src/checks/server/check_headers.js');

@@ -21,8 +21,16 @@ var request = require('../src/requestwrapper.js');
 var fs = require('fs-extra');
 var randomstring = require("randomstring");
 var http = require('http');
+var CancellationToken = require('../src/cancellationToken.js');
+
 var server = http.createServer(function (req, res) {
-    res.end("okay");
+    if (req.url == '/timeout') {
+        setTimeout(function () {
+            res.end();
+        }, 200);
+    } else {
+        res.end("okay");
+    }
 });
 
 describe('requestwrapper.js', function () {
@@ -57,6 +65,19 @@ describe('requestwrapper.js', function () {
                 });
             });
         });
+    });
+
+    it('is cancellable', function (done) {
+        var ct = new CancellationToken();
+        request.get({ url: "http://localhost:8000/timeout", timeout: 1000, cancellationToken: ct }, function (err, res, body) {
+            if (err && err.message.indexOf("ECANCELED") !== -1) {
+                done();
+            } else {
+                done(new Error("not canceled"));
+            }
+        });
+
+        ct.cancel();
     });
 
     after(function () {
