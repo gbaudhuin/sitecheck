@@ -61,11 +61,11 @@ describe('checks/server/check_headers.js', function () {
             issueRaised = true;
         });
         var ct = new cancellationToken();
-        check.check(new Target('http://localhost:8000/xframeoptions_ok', "", CONSTANTS.TARGETTYPE.SERVER), ct)
+        check.check(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER), ct)
             .then(() => {
                 expect(issueRaised).to.be.false;
                 issueRaised = false;
-                return check.check(new Target('http://localhost:8000/xframeoptions_ko', "", CONSTANTS.TARGETTYPE.SERVER), ct);
+                return check.check(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER), ct);
             })
             .then(() => {
                 expect(issueRaised).to.be.true;
@@ -75,7 +75,7 @@ describe('checks/server/check_headers.js', function () {
                 done(err);
             });
     });
-    it.only('is cancellable', function (done) {
+    it('is cancellable', function (done) {
         this.timeout(15000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers();
