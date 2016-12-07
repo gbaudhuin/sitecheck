@@ -24,13 +24,11 @@ class Target {
     /**
      * Constructor
      * @param {String} uri - Url of target. Must be an absolute uri.
-     * @param {String} scanId - Id of scan
      * @param {TargetType} targetType
      */
-    constructor(uri, scanId, targetType) {
+    constructor(uri, targetType) {
         if (uri && isRelativeUrl(uri)) throw new Error("uri cannot be relative. Uri must be absolute.");
         this.uri = uri;
-        this.scanId = scanId;
         this.targetType = targetType;
     }
 }

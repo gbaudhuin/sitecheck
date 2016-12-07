@@ -32,11 +32,12 @@ class Check {
      *                                           If a check does not need to access full crawling results, this property is set to true so it can be run during crawling.
      *                                           This has 2 advantages : scan will be faster and the user will get more feedback during crawl.
      *                                           Advice : if a check never uses Scan.Targets, this value should be True.
+     * @param {Target} target - Target to check.
      */
-    constructor(targetType, checkFamily, requiresAuthorization, canRunDuringCrawling) {
+    constructor(targetType, checkFamily, requiresAuthorization, canRunDuringCrawling, target) {
         this.hooks = [];
         this.hooks.OnRaiseIssue = [];
-
+        this.target = target;
         // targetType
         for (let t in CONSTANTS.TARGETTYPE) {
             /* istanbul ignore else */
@@ -109,17 +110,16 @@ class Check {
     /**
      * Return a Promise.
      * Promises should never reject or the app will shutdown. (The only case where reject is used is when a critical error occurs)
-     * @param {Target} target - The target to scan
+     * @param {CancellationToken} cancellationToken - The cancellation token.
      */
-    check(target) {
-        this.target = target;
-        return this._check();
+    check(cancellationToken) {
+        return this._check(cancellationToken);
     }
 
     /**
      * Inner check function to override in sub classes. These functions contain the actual check logic.
      */
-    _check() {
+    _check(cancellationToken) {
         return new Promise(function (resolve, reject) {
             resolve();
         });

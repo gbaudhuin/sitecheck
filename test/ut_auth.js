@@ -19,7 +19,7 @@
 var request = require('../src/requestwrapper.js');
 var fs = require('fs-extra');
 describe('auth', function () {
-    it('is ok', function (done) {
+    it.skip('is ok', function (done) {
         this.timeout(15000);
         request.get({ url: "https://twitter.com/", timeout: 1000, jar : true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {

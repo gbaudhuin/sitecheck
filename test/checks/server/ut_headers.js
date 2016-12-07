@@ -25,7 +25,8 @@ var fs = require('fs-extra');
 var expect = require('chai').expect;
 var winston = require('winston');
 var randomstring = require("randomstring");
- 
+var cancellationToken = require('../../../src/cancellationToken.js');
+
 var server = http.createServer(function (req, res) {
     if (req.url == '/xframeoptions_ok') {
         res.writeHead(200, { 'X-Frame-Options': 'SAMEORIGIN' });
@@ -36,7 +37,11 @@ var server = http.createServer(function (req, res) {
         setTimeout(function () {
             res.end();
         }, 2000);
-    }else {
+    } else if (req.url == '/cancel') {
+        setTimeout(function () {
+            res.end();
+        }, 2000);
+    } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('wrong request');
     }
@@ -48,18 +53,19 @@ describe('checks/server/check_headers.js', function () {
     });
 
     it('detects missing X-Frame-Options headers', function (done) {
+        this.timeout(2000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers();
         var issueRaised = false;
         check.setHook("OnRaiseIssue", function (ref, positionIdentifier, errorContent, maybeFalsePositive) {
             issueRaised = true;
         });
-
-        check.check(new Target('http://localhost:8000/xframeoptions_ok', "", CONSTANTS.TARGETTYPE.SERVER))
+        var ct = new cancellationToken();
+        check.check(new Target('http://localhost:8000/xframeoptions_ok', "", CONSTANTS.TARGETTYPE.SERVER), ct)
             .then(() => {
                 expect(issueRaised).to.be.false;
                 issueRaised = false;
-                return check.check(new Target('http://localhost:8000/xframeoptions_ko', "", CONSTANTS.TARGETTYPE.SERVER));
+                return check.check(new Target('http://localhost:8000/xframeoptions_ko', "", CONSTANTS.TARGETTYPE.SERVER), ct);
             })
             .then(() => {
                 expect(issueRaised).to.be.true;
@@ -67,29 +73,62 @@ describe('checks/server/check_headers.js', function () {
             })
             .catch((err) => {
                 done(err);
+            });
+    });
+    it.only('is cancellable', function (done) {
+        this.timeout(15000);
+        var check_headers = require('../../../src/checks/server/check_headers.js');
+        var check = new check_headers();
+        var check2 = new check_headers();
+        var ct = new cancellationToken();
+        let p1 = new Promise(function (resolve, reject) {
+            check.check(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER), ct)
+                .then(() => {
+                    reject();
+                })
+                .catch(() => {
+                    resolve();
+                });
+        });
+        let p2 = new Promise(function (resolve, reject) {
+            check2.check(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER), ct)
+                .then(() => {
+                    reject();
+                })
+                .catch(() => {
+                    resolve();
+                });
+        });
+        Promise.all([p1, p2])
+            .then(() => {
+                done();
             })
+            .catch(() => {
+                done(new Error('fail'));
+            });
+        ct.cancel();
     });
     /*
     it('handles connection errors', function (done) {
         this.timeout(10000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers();
-
+    
         // make sure no previous ut log file exists
         try {
             fs.unlinkSync("ut.log");
         } catch (e) { }
-
+    
         // reset winston transports
         try {
             winston.remove(winston.transports.File);
         } catch (e) { }
-
+    
         // add our file transport
         winston.add(winston.transports.File, {
             filename: "ut.log", handleExceptions: true, humanReadableUnhandledException: true, level: winston.level
         });
-
+    
         var go_on = false;
         
         // check connection unknown error
@@ -108,7 +147,7 @@ describe('checks/server/check_headers.js', function () {
                                 console.log("c");
                                 // destroy stream to allow correct program termination
                                 winston_stream.destroy();
-
+    
                                 // clean generated log file
                                 try {
                                     fs.unlinkSync("ut.log");

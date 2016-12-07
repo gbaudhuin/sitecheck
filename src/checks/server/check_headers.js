@@ -22,23 +22,28 @@ var winston = require('winston');
 const CONSTANTS = require("../../constants.js");
 
 module.exports = class CheckHeaders extends Check {
-    constructor() {
-        super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true);
+    constructor(target) {
+        super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
-    _check() {
+    _check(cancellationToken) {
         var self = this;
-        var timeout = 1000;
+        var timeout = 3000;
         return new Promise(function (resolve, reject) {
-            request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
+            let r = request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
                 if (!err) {
                     if (!res.headers['x-frame-options']) {
                         self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
                     }
                 }
-
                 resolve(); // checks always call resolve
             });
+            if (cancellationToken) {
+                cancellationToken.register(() => {
+                    r.abort();
+                    reject();
+                });
+            }
         });
     }
 };

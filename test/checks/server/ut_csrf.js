@@ -75,7 +75,7 @@ describe('checks/server/check_csrf.js', function () {
         check.setHook("OnRaiseIssue", function () {
             issueRaised = true;
         });
-        check.check(new Target('http://localhost:8000/csrf_ok', "", CONSTANTS.TARGETTYPE.SERVER))
+        check.check(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER))
             .then(() => {
                 expect(issueRaised).to.be.false;
                 issueRaised = false;
@@ -83,42 +83,42 @@ describe('checks/server/check_csrf.js', function () {
                 check.setHook("OnRaiseIssue", function () {
                     issueRaised = true;
                 });
-                check.check(new Target('http://localhost:8000/no_form', "", CONSTANTS.TARGETTYPE.SERVER))
+                check.check(new Target('http://localhost:8000/no_form', CONSTANTS.TARGETTYPE.SERVER))
                     .then(() => {
                         expect(issueRaised).to.be.true;
                         check = new check_csrf();
                         check.setHook("OnRaiseIssue", function () {
                             issueRaised = true;
                         });
-                        check.check(new Target('http://localhost:8000/no_connection_form', "", CONSTANTS.TARGETTYPE.SERVER))
+                        check.check(new Target('http://localhost:8000/no_connection_form', CONSTANTS.TARGETTYPE.SERVER))
                             .then(() => {
                                 expect(issueRaised).to.be.true;
                                 check = new check_csrf();
                                 check.setHook("OnRaiseIssue", function () {
                                     issueRaised = true;
                                 });
-                                check.check(new Target('http://localhost:8000/no_hidden', "", CONSTANTS.TARGETTYPE.SERVER))
+                                check.check(new Target('http://localhost:8000/no_hidden', CONSTANTS.TARGETTYPE.SERVER))
                                     .then(() => {
                                         expect(issueRaised).to.be.true;
                                         check = new check_csrf();
                                         check.setHook("OnRaiseIssue", function () {
                                             issueRaised = true;
                                         });
-                                        check.check(new Target('http://localhost:8001/not_reachable', "", CONSTANTS.TARGETTYPE.SERVER))
+                                        check.check(new Target('http://localhost:8001/not_reachable', CONSTANTS.TARGETTYPE.SERVER))
                                             .then(() => {
                                                 expect(issueRaised).to.be.true;
                                                 check = new check_csrf();
                                                 check.setHook("OnRaiseIssue", function () {
                                                     issueRaised = true;
                                                 });
-                                                check.check(new Target('http://localhost:8000/no_csrf_token', "", CONSTANTS.TARGETTYPE.SERVER))
+                                                check.check(new Target('http://localhost:8000/no_csrf_token', CONSTANTS.TARGETTYPE.SERVER))
                                                     .then(() => {
                                                         expect(issueRaised).to.be.true;
                                                         check = new check_csrf();
                                                         check.setHook("OnRaiseIssue", function () {
                                                             issueRaised = true;
                                                         });
-                                                        check.check(new Target('http://localhost:8000/timeout_occured', "", CONSTANTS.TARGETTYPE.SERVER))
+                                                        check.check(new Target('http://localhost:8000/timeout_occured', CONSTANTS.TARGETTYPE.SERVER))
                                                             .then(() => {
                                                                 expect(issueRaised).to.be.true;
                                                                 done();
