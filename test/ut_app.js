@@ -34,7 +34,7 @@ describe('app.js', function () {
         assert.equal(exceptionRaised, false);
     });
 
-    describe('#scan', function () {
+    describe('#getScanParams', function () {
         beforeEach(function () {
             try {
                 // app adds a transports.File each time it runs : we need to reset winston transports each time
@@ -44,11 +44,11 @@ describe('app.js', function () {
         /*
         */
         it('verify check names correctly', function (done) {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
 
             // invalid check name
             var params = { url: "http://www.example.com", checks: ["headers", "b*"], log: true }; // log=true because winston.stream needs a file transport to work
-            scan(params);
+            scanParams(params);
 
             var winston_stream = winston.stream({ start: -1 });
             winston_stream.on('log', function (log) {
@@ -61,14 +61,14 @@ describe('app.js', function () {
         });
 
         it('generates log directory if it does not exist', function (done) {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
             // remove unit tests logs 
             try {
                 fs.removeSync('./log');
             } catch (err) { }
             // invalid check name
             var params = { url: "http://www.example.com", checks: ["headers", "b*"], log: true };
-            var opts = scan(params);
+            var opts = scanParams(params);
 
             var winston_stream = winston.stream({ start: -1 });
             winston_stream.on('log', function (log) {
@@ -81,55 +81,55 @@ describe('app.js', function () {
         });
         
         it('converts single check to array', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
 
             // single check name as string
             var params = { url: "http://www.example.com", checks: "headers"};
-            var opts = scan(params);
+            var opts = scanParams(params);
 
             assert(Array.isArray(opts.checks)); // string must be converted to array
         });
 
         it('throw error when no checks', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
 
             // single check name as string
             var params = { url: "http://www.example.com", checks : null };
             assert.throws(function () {
-                scan(params);
+                scanParams(params);
             }, Error, "Error thrown");
 
             // checks are an object
             params = { url: "http://www.example.com", checks: {} };
             assert.throws(function () {
-                scan(params);
+                scanParams(params);
             }, Error, "Error thrown");
 
             // empty checks array
             params = { url: "http://www.example.com", checks: [] };
             assert.throws(function () {
-                scan(params);
+                scanParams(params);
             }, Error, "Error thrown");
         });
 
         it('rejects inexistant checks', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
 
             // single check name as string
             var params = {
                 url: "http://www.example.com", checks: ["headers", "inexistant"] };
-            var opts = scan(params);
+            var opts = scanParams(params);
 
             assert(opts.checks.length == 1);
         });
 
         it('parses url param correctly', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
 
             // 1st case : no url in config, no url in params
             var params = { url: null, checks: ["headers"] };
             assert.throws(function () {
-                scan(params);
+                scanParams(params);
             }, Error, "Error thrown");
 
             // 2nd case : no url in config, url in params
@@ -137,7 +137,7 @@ describe('app.js', function () {
                 winston.remove(winston.transports.File); // reset winston transports
             } catch (err) { }
             params = { url: "http://www.example.com", checks: ["headers"] };
-            var opts = scan(params);
+            var opts = scanParams(params);
             assert.equal("http://www.example.com", opts.url);
 
             // 3rd case : url in config, no url in params
@@ -146,7 +146,7 @@ describe('app.js', function () {
             } catch (err) { }
             var configfile = __dirname + "/ut_data/.sitecheckrc1";
             params = { checks: ["headers"], config: configfile };
-            opts = scan(params);
+            opts = scanParams(params);
             var json = JSON.parse(fs.readFileSync(configfile));
             assert.equal(json.url, opts.url);
 
@@ -156,7 +156,7 @@ describe('app.js', function () {
             } catch (err) { }
             configfile = __dirname + "/ut_data/.sitecheckrc1";
             params = { url: "http://www.example.com", checks: ["headers"], config: configfile };
-            opts = scan(params);
+            opts = scanParams(params);
             assert.equal("http://www.example.com", opts.url);
 
             // invalid url
@@ -166,21 +166,21 @@ describe('app.js', function () {
             configfile = __dirname + "/ut_data/.sitecheckrc1";
             params = { url: "http:/*www.example.com", checks: ["headers"], config: configfile };
             assert.throws(function () {
-                scan(params);
+                scanParams(params);
             }, Error, "Invalid url");
         });
         
         it('works without log file', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
             var params = { url: "http://www.example.com", checks: ["headers"], log: false };
-            var opts = scan(params);
+            var opts = scanParams(params);
             assert.equal("http://www.example.com", opts.url);
         });
 
         it('handles invalid log level', function () {
-            var scan = require('../src/app.js');
+            var scanParams = require('../src/app.js').getScanParams;
             var params = { url: "http://www.example.com", checks: ["headers"], log: true, loglevel: "zcee64c" };
-            var opts = scan(params);
+            var opts = scanParams(params);
             assert.equal("debug", opts.loglevel);
         });
         

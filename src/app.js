@@ -19,6 +19,7 @@
 var fs = require("fs");
 var valid_url = require("valid-url");
 var winston = require("winston");
+var Target = require('./target.js');
 const url = require('url');
 
 winston.remove(winston.transports.Console);
@@ -35,18 +36,64 @@ let defaultParams = {
     loglevel: "warn"
 };
 
+var targets = [];
+var checkMap = new Map();
+
 /**
  * Main function.
  * Starts a scan.
+ * @param {Array} opts - An array of scan parameters.
+ *                  <ul>
+ *                      <li>config : path to config file.</li>
+ *                      <li>url : Url to scan. Mandatory unless defined in config file.</li>
+ *                      <li>checks : An array of check names. Check names must match names of js files in src/checks/**, without ".js". Mandatory unless defined in config file.</li>
+ *                      <li>allPages : true to scan all pages of website. Default is false.</li>
+ *                      <li>log : true to activate log to file. Default is false.</li>
+ *                      <li>silent : true to prevent console logs. Default is false.</li>
+ *                      <li>loglevel : sets log level. Possible values are "error", "warn", "info", "verbose", "debug", "silly". Default is "warn".</li>
+ *                  </ul>
+ */
+function scan(opts) {
+    var params = getScanParams(opts);
+    var scanId = "";
+
+    var t = new Target(params.url, scanId, CONSTANTS.TARGETTYPE.SERVER);
+    targets.push(t);
+
+    for (let target of params) {
+        checkTarget(target);
+    }
+}
+
+function checkTarget(target, params) {
+    var running_checks = [];
+    for (let checkName of params.checks) {
+        var Check = require(checkMap(checkName));
+        var check = new Check();
+        if (check.targetType == target.targetType) {
+            running_checks.push(check.check(target));
+        }
+    }
+
+    // Wait until all checks are done.
+    // Concurrency level can be managed by request option "pool: {maxSockets: Infinity}" (https://github.com/request/request#requestoptions-callback)
+    Promise.all(running_checks);
+}
+
+/**
+ * Build scan parameters from default params + config file + "manual" params
  * @param {Array} params - An array of scan parameters.
  *                  <ul>
  *                      <li>config : path to config file.</li>
  *                      <li>url : Url to scan. Mandatory unless defined in config file.</li>
  *                      <li>checks : An array of check names. Check names must match names of js files in src/checks/**, without ".js". Mandatory unless defined in config file.</li>
  *                      <li>allPages : true to scan all pages of website. Default is false.</li>
+ *                      <li>log : true to activate log to file. Default is false.</li>
+ *                      <li>silent : true to prevent console logs. Default is false.</li>
+ *                      <li>loglevel : sets log level. Possible values are "error", "warn", "info", "verbose", "debug", "silly". Default is "warn".</li>
  *                  </ul>
  */
-function scan(params) {
+function getScanParams(params) {
     var opts = require('rc')("sitecheck", defaultParams, params);
 
     // make sure "checks" field is an array
@@ -102,6 +149,11 @@ function scan(params) {
         opts.logFile = logfilename;
     }
 
+    /* istanbul ignore next */ // complex and useless to test
+    if (opts.silent) {
+        winston.remove(winston.transports.Console);
+    }
+
     // verify check names
     var verified_checks = [];
     for (let i in opts.checks) {
@@ -118,8 +170,10 @@ function scan(params) {
 
                 for (let j in check_paths) if (!found && check_paths.hasOwnProperty(j)) {
                     var p = check_paths[j];
-                    if (!found && fs.existsSync(__dirname + "/" + p + "check_" + name + ".js")) {
+                    var fullpath = __dirname + "/" + p + "check_" + name + ".js";
+                    if (!found && fs.existsSync(fullpath)) {
                         verified_checks.push(name);
+                        checkMap.set(name, fullpath);
                         found = true;
                     }
                 }
@@ -135,4 +189,4 @@ function scan(params) {
     return opts;
 }
 
-module.exports = scan;
+module.exports = { scan: scan, getScanParams: getScanParams };

@@ -16,17 +16,14 @@
  */
 "use strict";
 
-//var request = require('../src/requestwrapper.js');
-var request = require('request');
+var request = require('../src/requestwrapper.js');
 var fs = require('fs-extra');
-//request = request.defaults({ jar: true })
 describe('auth', function () {
     it('is ok', function (done) {
         this.timeout(15000);
         request.get({ url: "https://twitter.com/", timeout: 1000, jar : true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {
                 var cookies = res.headers['set-cookie'];
-                var a = 99;
                 var r = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
                 var authenticity_token = r[1];
                 request.post({
@@ -38,8 +35,8 @@ describe('auth', function () {
                     },
                     url: "https://twitter.com/sessions",
                     form: {
-                        'session[username_or_email]': '',
-                        'session[password]': '',
+                        'session[username_or_email]': 'g.baudhuin@peoleo.fr',
+                        'session[password]': 'tSolar4oaw',
                         'remember_me': '1',
                         'return_to_ssl': 'true',
                         'scribe_log': '',
@@ -47,7 +44,8 @@ describe('auth', function () {
                         'authenticity_token': authenticity_token
                     },
                     timeout: 1000,
-                    jar: true, gzip: true
+                    jar: true,
+                    gzip: true
                 }, function (err, res, body) {
                     if (!err && res.statusCode == 302) {
                         request.get({
@@ -63,20 +61,20 @@ describe('auth', function () {
                             gzip: true
                         }, function (err, res, body2) {
                             if (!err && res.statusCode == 200) {
-                                var re = body2.match(/class=\"DashboardProfileCard-b/i);
+                                var re = body2.match(/class=\"DashboardProfileCard/i);
                                 if (re) {
                                     console.log("connecté !");
                                     done();
                                 }
+                                else {
+                                    done(new Error("not connected"));
+                                }
                             }
                             
                         });
-                        var re = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
-                        var r = 9;
                     }
                 });
             }
         });
-        done();
     });
 });

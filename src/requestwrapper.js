@@ -40,7 +40,7 @@ function request(uri, options, callback) {
 
     var params = request_orig.initParams(uri, options, callback);
     params.starttime = process.hrtime();
-    // override callback to log
+    // override callback so we can log
     var cb = params.callback;
     params.callback = function (err, res, body) {
         if (!err) {

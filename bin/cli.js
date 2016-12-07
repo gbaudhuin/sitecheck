@@ -27,7 +27,8 @@ const cli = meow(`
       -c, --check       Checks to pass. Multiple flags allowed : -c headers -c wordpress
       -h, --help        Display help  
       --config          config file in json format. Default : .sitecheckrc
-      -l, --log         activate log to file. Default is false. logs are stored in : ./log/*HOSTNAME*_YYMMDDHHMMSS.log
+      -l, --log         activate log to file. Default is false. Logs are stored in : ./log/*HOSTNAME*_YYMMDDHHMMSS.log
+      -s, --silent      deactivate console logs. Default is false (console are activated by default).
       --loglevel        set log level. Possible values are "error", "warn", "info", "verbose", "debug", "silly". Default is "warn". 
     Examples
       $ sitecheck "http://www.example.com" --allPages
@@ -36,9 +37,10 @@ const cli = meow(`
             a: 'allpages',
             c: ['check', 'checks'],
             l: 'log',
-            h: 'help'
+            h: 'help',
+            s: 'silent'
         },
-        boolean: ["a"],
+        boolean: ["a", "l", "s"],
         string: ["c"]
 });
 
@@ -46,7 +48,7 @@ if (cli.input.length > 0) {
     cli.flags.url = cli.input[0];
 }
 
-var scan = require("../src/app.js");
+var scan = require("../src/app.js").scan;
 
 var params = {};
 try {

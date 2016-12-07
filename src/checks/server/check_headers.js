@@ -31,18 +31,12 @@ module.exports = class CheckHeaders extends Check {
         var timeout = 1000;
         return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
-                if (err) {
-                    if (err.code === "ESOCKETTIMEDOUT") {
-                        winston.warn("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
-                    } else {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + ")");
-                    }
-                } else {
+                if (!err) {
                     if (!res.headers['x-frame-options']) {
-                        self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.url + "'", true);
+                        self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
                     }
                 }
-                
+
                 resolve(); // checks always call resolve
             });
         });

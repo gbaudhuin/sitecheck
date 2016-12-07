@@ -68,7 +68,7 @@ describe('checks/server/check_csrf.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it('detects missing CSRF token', (done) => {
+    it.skip('detects missing CSRF token', (done) => {
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
         var check = new check_csrf();
         var issueRaised = false;
