@@ -111,7 +111,10 @@ class Check {
         }
         return new Promise((resolve, reject) => {
             cancellationToken.register(() => {
-                reject(new Error("ECANCELED"));
+                var err = new Error("ECANCELED");
+                err.cancelled = true;
+                err.code = "ECANCELED";
+                reject(err);
             });
 
             this._check(cancellationToken).then(() => {
@@ -129,7 +132,7 @@ class Check {
      */
     _check(cancellationToken) {
         return new Promise(function (resolve, reject) {
-            resolve();
+            reject(new Error("_check(cancellationToken) must be overriden"));
         });
     }
 }

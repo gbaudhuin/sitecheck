@@ -25,8 +25,7 @@ describe('Check class', function () {
         var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
 
         var ct = new CancellationToken();
-        c.check(ct).then((issues) => {
-            assert(!issues);
+        c.check(ct).catch(() => {
             done();
         });
     });
@@ -73,5 +72,23 @@ describe('Check class', function () {
         assert.throws(function () {
             new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, null);
         }, Error, "Error thrown on case 2");
+    });
+
+    it('ensures a cancellation token is passed', function () {
+        var check = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true);
+        assert.throws(() => {
+            check.check()
+        });
+    });
+
+    it("rejects check's Promise with Error('ECANCELED') when cancel is triggered", function (done) {
+        var ct = CancellationToken();
+        ct.register((value) => {
+        });
+        var check = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true);
+        check.check(ct).catch((e) => {
+            done();
+        });
+        ct.cancel();
     });
 });

@@ -75,7 +75,10 @@ function request(uri, options, callback) {
     if (params.cancellationToken) {
         params.cancellationToken.register(() => {
             r.abort();
-            params.callback(new Error("ECANCELED : request aborted"));
+            var err = new Error("ECANCELED : request aborted");
+            err.cancelled = true;
+            err.code = "ECANCELED";
+            params.callback(err);
         });
     }
     else{

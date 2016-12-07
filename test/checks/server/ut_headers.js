@@ -25,7 +25,7 @@ var fs = require('fs-extra');
 var expect = require('chai').expect;
 var winston = require('winston');
 var randomstring = require("randomstring");
-var cancellationToken = require('../../../src/cancellationToken.js');
+var CancellationToken = require('../../../src/cancellationToken.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/xframeoptions_ok') {
@@ -56,7 +56,7 @@ describe('checks/server/check_headers.js', function () {
         this.timeout(2000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
 
-        var ct = new cancellationToken();
+        var ct = new CancellationToken();
 
         var check1 = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
         var check2 = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
@@ -87,30 +87,19 @@ describe('checks/server/check_headers.js', function () {
     });
 
     it('is cancellable', function (done) {
-        this.timeout(15000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
-        var check = new check_headers();
-        var check2 = new check_headers();
-        var ct = new cancellationToken();
+        var check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
+        var ct = new CancellationToken();
         let p1 = new Promise(function (resolve, reject) {
-            check.check(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER), ct)
+            check.check(ct)
                 .then(() => {
                     reject();
                 })
-                .catch(() => {
-                    resolve();
+                .catch((e) => {
+                    if (e.cancelled) resolve();
                 });
         });
-        let p2 = new Promise(function (resolve, reject) {
-            check2.check(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER), ct)
-                .then(() => {
-                    reject();
-                })
-                .catch(() => {
-                    resolve();
-                });
-        });
-        Promise.all([p1, p2])
+        Promise.all([p1])
             .then(() => {
                 done();
             })

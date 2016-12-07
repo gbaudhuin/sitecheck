@@ -17,12 +17,23 @@
 
 'use strict';
 
+/**
+ * A token used to cancel asynchronous operations.
+ * Registered callbacks are called when cancel is called. Callbacks are in charge of interrupting pieces of async code. E.G : call .abort() on a request.
+ * @param {CancellationToken} parentToken - Parent token. See CancellationToken.createDependentToken for further explanation.
+ */
 function CancellationToken(parentToken) {
     if (!(this instanceof CancellationToken)) {
         return new CancellationToken(parentToken);
     }
     this.isCancellationRequested = false;
+
     var cancellationPromise = new Promise(resolve => {
+
+        /**
+        * triggers cancellation.
+        * @param {Error} e - optional Error object
+        */
         this.cancel = e => {
             this.isCancellationReqested = true;
             if (e) {
@@ -31,15 +42,27 @@ function CancellationToken(parentToken) {
             else {
                 var err = new Error("ECANCELED");
                 err.cancelled = true;
+                err.code = "ECANCELED";
                 resolve(err);
             }
         };
     });
+
+    /**
+    * register a callback to be called when cancel() is called
+    */
     this.register = (callback) => {
         cancellationPromise.then(callback);
     };
 
+    /**
+    * Creates a child token.
+    * When a parent token triggers cancellation, child tokens are triggered too.
+    * When a child token triggers cancellation, parent does not trigger cancellation.
+    */
     this.createDependentToken = () => new CancellationToken(this);
+
+
     if (parentToken && parentToken instanceof CancellationToken) {
         parentToken.register(this.cancel);
     }

@@ -40,23 +40,24 @@ describe('requestwrapper.js', function () {
 
     it('is ok', function (done) {
         var c = request.requestCount;
-        request.get({ url: "http://localhost:8000", timeout: 1000 }, function (err, res, body) {
+        var ct = new CancellationToken();
+        request.get({ url: "http://localhost:8000", timeout: 1000, cancellationToken: ct }, function (err, res, body) {
             assert.equal(res.request.gzip, true, "gzip should be true");
             assert.equal(request.requestCount, c + 1, "bad requestCount");
 
-            request.get({ url: "http://localhost:8000", timeout: 1000, gzip: false }, function (err, res, body) {
+            request.get({ url: "http://localhost:8000", timeout: 1000, gzip: false, cancellationToken: ct }, function (err, res, body) {
                 assert.equal(res.request.gzip, false, "gzip should be false");
                 assert.equal(request.requestCount, c + 2, "bad requestCount");
 
-                request.get({ url: "http://localhost:8000", timeout: 1000, gzip: 0 }, function (err, res, body) {
+                request.get({ url: "http://localhost:8000", timeout: 1000, gzip: 0, cancellationToken: ct }, function (err, res, body) {
                     assert.equal(res.request.gzip, false, "gzip should be false");
                     assert.equal(request.requestCount, c + 3, "bad requestCount");
 
-                    request.get({ url: 'http*://inexistantdomain.com', timeout: 1000 }, function (err, res, body) {
+                    request.get({ url: 'http*://inexistantdomain.com', timeout: 1000, cancellationToken: ct}, function (err, res, body) {
                         assert(!err.code);
                         assert(err.message.indexOf("Invalid URI") !== -1);
 
-                        request.get({ url: 'http://inexistantdomain' + randomstring.generate(5) + '.com/', timeout: 1000, gzip: false }, function (err, res, body) {
+                        request.get({ url: 'http://inexistantdomain' + randomstring.generate(5) + '.com/', timeout: 1000, gzip: false, cancellationToken: ct }, function (err, res, body) {
                             assert(err.code);
                             assert(err.message);
                             done();
@@ -78,6 +79,14 @@ describe('requestwrapper.js', function () {
         });
 
         ct.cancel();
+    });
+
+    it('detects missing cancellationToken', function () {
+        assert.throws(() => {
+            request.get({ url: "http://localhost:8000", timeout: 1000}, function (err, res, body) {
+                
+            });
+        });
     });
 
     after(function () {

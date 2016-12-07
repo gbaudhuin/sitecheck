@@ -74,7 +74,7 @@ describe('checks/server/check_csrf.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it.only('detects missing CSRF token', (done) => {
+    it('detects missing CSRF token', (done) => {
         var ct = new cancellationToken();
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
         var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
@@ -202,113 +202,7 @@ describe('checks/server/check_csrf.js', function () {
             });
 
     });
-    it('is cancellable', (done) => {
-        let check_csrf = require('../../../src/checks/server/check_csrf.js');
-        var ct = new cancellationToken();
-        let p1 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch(() => {
-                    expect(issueRaised).to.be.false;
-                    resolve();
-                });
-        });
-        let p2 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/no_form', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch(() => {
-                    //expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });
-        let p3 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/no_connection_form', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch(() => {
-                    //expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });
-        let p4 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/no_hidden', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch(() => {
-                    //expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });
-        /*let p5 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8001/not_reachable', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    reject();
-                }).catch((err) => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });*/
-        let p6 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/no_csrf_token', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch(() => {
-                    // expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });
-        let p7 = new Promise(function (resolve, reject) {
-            let check = new check_csrf(new Target('http://localhost:8000/timeout_occured', CONSTANTS.TARGETTYPE.SERVER), ct);
-            let issueRaised = false;
-            check.check(ct)
-                .then(() => {
-                    reject();
-                }).catch((err) => {
-                    //expect(issueRaised).to.be.true;
-                    resolve();
-                });
-        });
-        Promise.all([p1, p2, p3, p4,/* p5,*/ p6, p7])
-            .then(() => {
-                done();
-            })
-            .catch(() => {
-                done(new Error('fail'));
-            });
-        ct.cancel();
-    });
+    
     after(() => {
         server.close();
     });

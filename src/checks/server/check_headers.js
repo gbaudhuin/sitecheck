@@ -30,13 +30,16 @@ module.exports = class CheckHeaders extends Check {
         var self = this;
         var timeout = 3000;
         return new Promise(function (resolve, reject) {
-            request.get({ url: self.target.uri, timeout: timeout }, function (err, res, body) {
-                if (!err) {
-                    if (!res.headers['x-frame-options']) {
-                        self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
-                    }
+            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
+                if (err && err.cancelled) {
+                    reject(err);
+                    return;
                 }
-                resolve(); // checks always call resolve
+
+                if (!res.headers['x-frame-options']) {
+                    self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
+                }
+                resolve();
             });
         });
     }
