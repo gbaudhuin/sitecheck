@@ -29,6 +29,7 @@ module.exports = class CheckCSRF extends Check {
         this._form = "";
         this._body = "";
         this._tokenName = "";
+        this._cancellationToken = "";
         this._token = "";
         this._token2 = "";
         this._body2 = "";
@@ -58,9 +59,10 @@ module.exports = class CheckCSRF extends Check {
 
     _check(cancellationToken) {
         var self = this;
+        self._cancellationToken = cancellationToken;
         var timeout = 3000;
         return new Promise((resolve, reject) => {
-            let r = request.get({ url: self.target.uri, timeout: timeout }, (err, res, body) => {
+            let r = request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, (err, res, body) => {
                 if (err) {
                     if (err.code === "ESOCKETTIMEDOUT") {
                         winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
@@ -74,12 +76,6 @@ module.exports = class CheckCSRF extends Check {
                 }
                 resolve();
             });
-            /*if (cancellationToken) {
-                cancellationToken.register(() => {
-                    r.abort();
-                    reject();
-                });
-            }*/
         })
             .then(self.checkIfPageHasAForm.bind(self))
             .then(self.checkIfFormIsAConnectionForm.bind(self))
@@ -138,7 +134,7 @@ module.exports = class CheckCSRF extends Check {
     checkIfTokenChanges() {
         let self = this;
         if (self._token !== '') {
-            request.get({ url: self.target.uri, timeout: 2000 }, (err, res, body) => {
+            request.get({ url: self.target.uri, timeout: 2000, cancellationToken: self._cancellationToken }, (err, res, body) => {
                 self._body2 = body;
                 let $ = cheerio.load(body);
                 let form = $('form');
@@ -187,7 +183,8 @@ module.exports = class CheckCSRF extends Check {
     }
 
     testConnection() {
-        request.get({ url: "https://twitter.com/", timeout: 1000, jar: true }, function (err, res, body) {
+        let self = this;
+        request.get({ url: "https://twitter.com/", timeout: 1000, cancellationToken: self._cancellationToken , jar: true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {
                 var cookies = res.headers['set-cookie'];
                 var r = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
@@ -210,6 +207,7 @@ module.exports = class CheckCSRF extends Check {
                         'authenticity_token': authenticity_token
                     },
                     timeout: 1000,
+                    cancellationToken: self._cancellationToken,
                     jar: true, gzip: true
                 }, function (err, res, body) {
                     if (!err && res.statusCode == 302) {
@@ -222,6 +220,7 @@ module.exports = class CheckCSRF extends Check {
                             },
                             url: "https://twitter.com/",
                             timeout: 1000,
+                            cancellationToken: self._cancellationToken,
                             jar: true,
                             gzip: true
                         }, function (err, res, body2) {

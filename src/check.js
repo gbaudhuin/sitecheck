@@ -106,6 +106,9 @@ class Check {
      * @param {CancellationToken} cancellationToken - The cancellation token.
      */
     check(cancellationToken) {
+        if(!cancellationToken){
+            throw new Error('Cancellation token is mandatory');
+        }
         return new Promise((resolve, reject) => {
             cancellationToken.register(() => {
                 reject(new Error("ECANCELED"));

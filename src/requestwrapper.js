@@ -78,6 +78,9 @@ function request(uri, options, callback) {
             params.callback(new Error("ECANCELED : request aborted"));
         });
     }
+    else{
+        throw new Error('Mandatory cancellation token is missing from request options');
+    }
 
     return r;
 }
