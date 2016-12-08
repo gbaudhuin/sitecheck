@@ -18,7 +18,6 @@
 
 var Check = require('../../check');
 var request = require('request');
-var winston = require('winston');
 var cheerio = require('cheerio');
 const CONSTANTS = require("../../constants.js");
 
