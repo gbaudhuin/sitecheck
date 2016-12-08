@@ -37,6 +37,7 @@ module.exports = class CheckCSRF extends Check {
         this._usernameInput = "";
         this._submitButton = "";
         this._passwordInput = "";
+        this._connectionUrl = "";
         this._COMMON_CSRF_NAMES = [
             'csrf_token',
             'CSRFName',                   // OWASP CSRF_Guard
@@ -55,6 +56,28 @@ module.exports = class CheckCSRF extends Check {
 
         ];
         this._entropy = 0;
+        this._conf = {
+            "url": "https://twitter.com",
+            "connectionUrl": "https://twitter.com/sessions",
+            "IDS": {
+                "username": "v.crasnier@peoleo.fr",
+                "password": "azerty123"
+            },
+            "loginInputs": {
+                "usernameInput": "",
+                "passwordInput": ""
+            },
+            "connectionToken": "authenticity_token",
+            "form": {
+                'session[username_or_email]': "v.crasnier@peoleo.fr",
+                'session[password]': "azerty123",
+                'remember_me': '1',
+                'return_to_ssl': 'true',
+                'scribe_log': '',
+                'redirect_after_login': '/',
+                'authenticity_token': ""
+            }
+        };
     }
 
     _check(cancellationToken) {
@@ -62,28 +85,73 @@ module.exports = class CheckCSRF extends Check {
         self._cancellationToken = cancellationToken;
         var timeout = 3000;
         return new Promise((resolve, reject) => {
-            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, (err, res, body) => {
-                if (err) {
-                    if (err.code === "ESOCKETTIMEDOUT") {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
-                        self._raiseIssue("CSRF_Token_Warning.xml", null, "Timeout occured at url '" + self.target.uri, true);
-                    } else {
-                        winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Unkown error (" + err.code + ")");
-                        self._raiseIssue("CSRF_Token_Warning.xml", null, "The page at url '" + self.target.uri + "' is not reachable", true);
-                    }
-                } else {
-                    self._body = body;
+            request.get({ url: self._conf.url, timeout: timeout, cancellationToken: cancellationToken, jar: true }, (err, res, body) => {
+                if (err && err.cancelled) {
+                    reject(err);
+                    return;
                 }
-                resolve();
+                if (body.indexOf('<form') !== -1) {
+                    let $ = cheerio.load(body);
+                    $('form').each(function (f, elem) {
+                        if ($(elem).attr('action') == self._conf.connectionUrl) {
+                            self._conf.form.authenticity_token = ($(elem).find('input[name=' + self._conf.connectionToken + ']').attr('value'));
+                        }
+                        resolve();
+                    });
+                }
             });
-        })
-            .then(self.checkIfPageHasAForm.bind(self))
+            /*.then(self.checkIfPageHasAForm.bind(self))
             .then(self.checkIfFormIsAConnectionForm.bind(self))
             .then(self.checkIfFormHasAnHiddenInput.bind(self))
             .then(self.checkIfFormContainsToken.bind(self))
             .then(self.checkIfTokenChanges.bind(self))
             //.then(self.checkEntropy.bind(self))
-            .then(self.testConnection.bind(self));
+            .then(self.testConnection.bind(self));*/
+        })
+            .then(self.login.bind(self));
+    }
+
+    login() {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            request.post({
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+                },
+                url: "https://twitter.com/sessions",
+                form: self._conf.form,
+                timeout: 1000,
+                cancellationToken: self._cancellationToken,
+                jar: true, gzip: true
+            }, function (err, res, body) {
+                if (!err && res.statusCode == 302) {
+                    request.get({
+                        headers: {
+                            'content-type': 'application/x-www-form-urlencoded',
+                            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'accept-encoding': 'gzip, deflate, br',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+                        },
+                        url: "https://twitter.com/",
+                        timeout: 1000,
+                        cancellationToken: self._cancellationToken,
+                        jar: true,
+                        gzip: true
+                    }, function (err, res, body2) {
+                        if (!err && res.statusCode == 200) {
+                            var re = body2.match(/class=\"DashboardProfileCard/);
+                            if (re) {
+                                console.log("connecté !");
+                                resolve();
+                            }
+                        }
+                    });
+                }
+            });
+        });
     }
 
     checkIfPageHasAForm() {
@@ -184,7 +252,7 @@ module.exports = class CheckCSRF extends Check {
 
     testConnection() {
         let self = this;
-        request.get({ url: "https://twitter.com/", timeout: 1000, cancellationToken: self._cancellationToken , jar: true }, function (err, res, body) {
+        request.get({ url: self._conf.url, timeout: 1000, cancellationToken: self._cancellationToken, jar: true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {
                 var r = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
                 var authenticity_token = r[1];
