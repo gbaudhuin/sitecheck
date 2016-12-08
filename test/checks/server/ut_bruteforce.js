@@ -34,6 +34,11 @@ var server = http.createServer(function (req, res) {
             res.end('Access granted');
         }
     }
+    else if (req.url == '/get_form') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8000/post_form"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/><input type="hidden" name="authenticity_token" value="' + Token() + '"/></form>');
+    }
     else if (req.url == '/post_form') {
         var body = [];
         req.on('error', function (err) {
@@ -42,13 +47,30 @@ var server = http.createServer(function (req, res) {
             body.push(chunk);
         }).on('end', function () {
             body = Buffer.concat(body).toString();
-            if(body == "username=Bob&password=99999999"){
-            res.writeHead(200, { "Content-Type": "text/html" });
-             res.end('done');
-        }
+            if (body.indexOf("username=Bob&password=99999999") !== -1) {
+                res.writeHead(200, { "Content-Type": "text/html" });
+                res.end('done');
+            }
+            else {
+                res.writeHead(401, { "Content-Type": "text/html" });
+                res.end('Access denied');
+            }
         });
     }
 });
+
+function Token() {
+    var rand = function () {
+        return Math.random().toString(36).substr(2); // remove `0.`
+    };
+
+    var token = function () {
+        return rand() + rand(); // to make it longer
+    };
+
+    return token();
+}
+
 describe('checks/server/check_bruteforce.js', function () {
     this.timeout(50000);
     before(() => {
@@ -64,7 +86,7 @@ describe('checks/server/check_bruteforce.js', function () {
 
         let p1 = new Promise(function (resolve, reject) {
             check1.check(ct).then((issues) => {
-                if (!issues){
+                if (!issues) {
                     reject(new Error("unexpected issue(s) raised"));
                 }
                 else
@@ -81,17 +103,17 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    /*it.only('detects if bruteforce by form works', function (done) {
+    it.only('detects if bruteforce by form works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
         var ct = new cancellationToken();
 
-        var check1 = new check_bruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
+        var check1 = new check_bruteforce(new Target('http://localhost:8000/get_form', CONSTANTS.TARGETTYPE.SERVER));
 
         let p1 = new Promise(function (resolve, reject) {
             check1.check(ct).then((issues) => {
-                if (!issues){
+                if (issues) {
                     reject(new Error("unexpected issue(s) raised"));
                 }
                 else
@@ -106,7 +128,7 @@ describe('checks/server/check_bruteforce.js', function () {
             .catch(() => {
                 done(new Error('fail'));
             });
-    });*/
+    });
 
     it('is cancellable', function (done) {
         this.timeout(2000);
