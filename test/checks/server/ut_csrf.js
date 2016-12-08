@@ -70,7 +70,7 @@ function Token() {
 }
 
 describe('checks/server/check_csrf.js', function () {
-    this.timeout(5000);
+    this.timeout(15000);
     before(() => {
         server.listen(8000);
     });
@@ -104,6 +104,7 @@ describe('checks/server/check_csrf.js', function () {
                     }
                 })
                 .catch(() => {
+                    console.log(123);
                     reject();
                 });
         });*/
@@ -195,9 +196,11 @@ describe('checks/server/check_csrf.js', function () {
 */
         Promise.all([p1/*, p3, p4, p5, p6, p7, p8*/])
             .then(() => {
+                console.log(123);
                 done();
             })
             .catch((e) => {
+                console.log(456);
                 done(e);
             });
 
