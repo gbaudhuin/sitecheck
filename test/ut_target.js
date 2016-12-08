@@ -20,7 +20,7 @@ var assert = require('assert');
 var Target = require('../src/target.js');
 const CONSTANTS = require('../src/constants.js');
 
-describe('target.js', function () {
+describe('Target class', function () {
     it('rejects relative urls', function () {
         assert.throws(function () {
             new Target("lorem", "scanid", CONSTANTS.TARGETTYPE.NONE);

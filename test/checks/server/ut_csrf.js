@@ -74,7 +74,7 @@ describe('checks/server/check_csrf.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it.only('detects missing CSRF token', (done) => {
+    it('detects missing CSRF token', (done) => {
         var ct = new cancellationToken();
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
         var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
@@ -92,7 +92,7 @@ describe('checks/server/check_csrf.js', function () {
                     reject(e);
                 });
         });
-        let p2 = new Promise(function (resolve, reject) {
+       /* let p2 = new Promise(function (resolve, reject) {
             check = new check_csrf(new Target('http://localhost:8000/no_form', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct)
                 .then((issues) => {
@@ -106,7 +106,7 @@ describe('checks/server/check_csrf.js', function () {
                 .catch(() => {
                     reject();
                 });
-        });
+        });*/
         /*
         let p3 = new Promise(function (resolve, reject) {
             check = new check_csrf(new Target('http://localhost:8000/no_connection_form', CONSTANTS.TARGETTYPE.SERVER));

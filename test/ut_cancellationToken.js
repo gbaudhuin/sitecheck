@@ -19,7 +19,7 @@
 var assert = require('assert');
 var CancellationToken = require('../src/cancellationToken.js');
 
-describe('cancellationToken.js', function () {
+describe('CancellationToken class', function () {
 
     it('triggers registered cb on cancel', function (done) {
         var ct = CancellationToken();

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <form name="login" action="{{action_field}}" method="get" accept-charset="utf-8">
+        <ul>
+            <li>
+                <label for="usermail">Email</label>
+                <input type="email" name="{{username_field}}" placeholder="yourname@email.com" required>
+            </li>
+            <li>
+                <label for="password">Password</label>
+                <input type="password" name="{{password_field}}" placeholder="password" required>
+            </li>
+            <li>
+                <input type="submit" value="Login">
+            </li>
+        </ul>
+        <input type="hidden" name="{{csrf_field}}" value="{{csrf_value}}">
+    </form>
+</body>
+</html>
