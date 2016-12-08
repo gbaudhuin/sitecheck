@@ -18,7 +18,6 @@
 
 var Check = require('../../check');
 var request = require('../../requestwrapper');
-var winston = require('winston');
 const CONSTANTS = require("../../constants.js");
 
 module.exports = class CheckHeaders extends Check {

@@ -39,7 +39,7 @@ describe('cancellationToken.js', function () {
         ct.cancel();
     });
 
-    it('triggers child cancellation without triggering parent', function () {
+    it('triggers child cancellation without triggering parent', function (done) {
         var ctParent = new CancellationToken();
         ctParent.register(() => {
             done(new Error("Parent token called"));

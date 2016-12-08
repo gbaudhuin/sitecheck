@@ -29,14 +29,24 @@
 
 var mod = require('module'),
     request_orig = require('request'),
-    extend = require('extend'),
-    fs = require('fs'),
     winston = require('winston');
 
+/**
+ * helper function. Cloned from request/lib/helpers.js.
+ * @param params
+ */
+function paramsHaveRequestBody(params) {
+    return (
+        params.body ||
+        params.requestBodyStream ||
+        (params.json && typeof params.json !== 'boolean') ||
+        params.multipart
+    );
+}
+
 function request(uri, options, callback) {
-    /* istanbul ignore next */ // not our code
     if (typeof uri === 'undefined') {
-        throw new Error('undefined is not a valid uri or options object.')
+        throw new Error('undefined is not a valid uri or options object.');
     }
 
     var params = request_orig.initParams(uri, options, callback);
@@ -54,7 +64,7 @@ function request(uri, options, callback) {
             }
         }
         cb(err, res, body);
-    }
+    };
     // change gzip param default behavior. Default is now true.
 
     if (params.gzip === false || params.gzip === 0) {
@@ -63,9 +73,8 @@ function request(uri, options, callback) {
         params.gzip = true;
     }
 
-    /* istanbul ignore next */ // not our code
     if (params.method === 'HEAD' && paramsHaveRequestBody(params)) {
-        throw new Error('HTTP HEAD requests MUST NOT include a request body.')
+        throw new Error('HTTP HEAD requests MUST NOT include a request body.');
     }
 
     request.requestCount++;
@@ -88,40 +97,31 @@ function request(uri, options, callback) {
     return r;
 }
 
-/* istanbul ignore next */ // not our code
 function verbFunc(verb) {
-    var method = verb.toUpperCase()
+    var method = verb.toUpperCase();
     return function (uri, options, callback) {
         var params = request_orig.initParams(uri, options, callback);
-        params.method = method
-        return request(params, params.callback)
-    }
+        params.method = method;
+        return request(params, params.callback);
+    };
 }
 
 // define like this to please codeintel/intellisense IDEs
-request.get = verbFunc('get')
-request.head = verbFunc('head')
-request.post = verbFunc('post')
-request.put = verbFunc('put')
-request.patch = verbFunc('patch')
-request.del = verbFunc('delete')
-request['delete'] = verbFunc('delete')
+request.get = verbFunc('get');
+request.head = verbFunc('head');
+request.post = verbFunc('post');
+request.put = verbFunc('put');
+request.patch = verbFunc('patch');
+request.del = verbFunc('delete');
+request['delete'] = verbFunc('delete');
 
 // add a request counter
 request.requestCount = 0;
 
-/* istanbul ignore next */ // not our code
-request.jar = function (store) {
-    return cookies.jar(store)
-}
-
-/* istanbul ignore next */ // not our code
-request.cookie = function (str) {
-    return cookies.parse(str)
-}
-
 mod._cache[require.resolve('request')].exports = request;
 request.Request = request_orig.Request;
 request.initParams = request_orig.initParams;
+request.cookie = request_orig.cookie;
+request.jar = request_orig.jar;
 
 module.exports = request;

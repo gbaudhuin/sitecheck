@@ -21,10 +21,9 @@
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
-var fs = require('fs-extra');
-var expect = require('chai').expect;
-var winston = require('winston');
-var randomstring = require("randomstring");
+//var fs = require('fs-extra');
+//var winston = require('winston');
+//var randomstring = require("randomstring");
 var CancellationToken = require('../../../src/cancellationToken.js');
 
 var server = http.createServer(function (req, res) {

@@ -22,6 +22,7 @@ var winston = require("winston");
 var Target = require('./target.js');
 var CancellationToken = require('./cancellationToken.js');
 const url = require('url');
+const CONSTANTS = require("./constants.js");
 
 winston.remove(winston.transports.Console);
 winston.add(winston.transports.Console, {

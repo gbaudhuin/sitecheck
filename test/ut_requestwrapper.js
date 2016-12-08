@@ -18,7 +18,6 @@
 
 var assert = require('assert');
 var request = require('../src/requestwrapper.js');
-var fs = require('fs-extra');
 var randomstring = require("randomstring");
 var http = require('http');
 var CancellationToken = require('../src/cancellationToken.js');

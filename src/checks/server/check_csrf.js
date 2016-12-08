@@ -62,7 +62,7 @@ module.exports = class CheckCSRF extends Check {
         self._cancellationToken = cancellationToken;
         var timeout = 3000;
         return new Promise((resolve, reject) => {
-            let r = request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, (err, res, body) => {
+            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, (err, res, body) => {
                 if (err) {
                     if (err.code === "ESOCKETTIMEDOUT") {
                         winston.error("CheckHeaders : no response from '" + self.target.uri + "'. Timeout occured (" + timeout + "ms)");
@@ -186,7 +186,6 @@ module.exports = class CheckCSRF extends Check {
         let self = this;
         request.get({ url: "https://twitter.com/", timeout: 1000, cancellationToken: self._cancellationToken , jar: true }, function (err, res, body) {
             if (!err && res.statusCode == 200) {
-                var cookies = res.headers['set-cookie'];
                 var r = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
                 var authenticity_token = r[1];
                 request.post({

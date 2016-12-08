@@ -20,7 +20,7 @@
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
-var expect = require('chai').expect;
+//var expect = require('chai').expect;
 var cancellationToken = require('../../../src/cancellationToken.js');
 
 var server = http.createServer(function (req, res) {

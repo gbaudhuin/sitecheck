@@ -77,7 +77,7 @@ describe('Check class', function () {
     it('ensures a cancellation token is passed', function () {
         var check = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true);
         assert.throws(() => {
-            check.check()
+            check.check();
         });
     });
 
