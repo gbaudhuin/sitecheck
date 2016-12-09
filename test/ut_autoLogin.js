@@ -56,13 +56,20 @@ describe('AutoLogin class', function () {
     });
 
     it('#findFormData', function (done) {
-        this.timeout(2000);
+        this.timeout(5000);
 
-        var autoLogin = new AutoLogin("userA", "ezg874zh7", 'http://localhost:8000/login');
-        autoLogin.findFormFields((err, data) => {
-            if (data.fields.user == "user123") done();
-            else done(new Error("user field no found"));
+        //var autoLogin = new AutoLogin('http://localhost:8000/login');
+        var autoLogin = new AutoLogin('https://twitter.com/');
+        autoLogin.findLoginInputVector((err, data) => {
+         //   if (data.fields.user == "user123") done();
+          //  else done(new Error("user field no found"));
+
+            autoLogin.login((err, data) => {
+                done(err);
+            });
         });
+
+
     });
     
     after(function () {

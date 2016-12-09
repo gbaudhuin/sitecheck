@@ -16,9 +16,10 @@
  */
 "use strict";
 var isRelativeUrl = require('is-relative-url');
-var request = require('request');
+var request = require('../src/requestwrapper.js');
 var CancellationToken = require('./cancellationToken.js');
-var cheerio = require('cheerio');
+var Url = require('url');
+var inputVector = require('./inputVector.js');
 
 var fieldsUser = ["user", "username", "name", "email", "log", "id", "login", "usr", "u"];
 var fieldsPassword = ["password", "pwd", "p", "pass"];
@@ -49,57 +50,105 @@ class AutoLogin {
      * @param {String} password - password
      * @param {String} absoluteLoginFormUri - absolute uri that contains the login form
      */
-    constructor(username, password, absoluteLoginFormUri) {
+    constructor(absoluteLoginFormUri) {
         if (absoluteLoginFormUri && isRelativeUrl(absoluteLoginFormUri)) throw new Error("Uri cannot be relative. Uri must be absolute.");
-        this.username = username;
-        this.password = password;
         this.loginFormUri = absoluteLoginFormUri;
+        this.jar = request.jar();
+        this.loginInputVector = {};
     }
 
-    findFormFields(callback) {
+    findLoginInputVector(callback) {
         var self = this;
-        var jar = request.jar();
-        request.get({ url: self.loginFormUri, timeout: 5000, cancellationToken: new CancellationToken(), jar:jar }, (err, res, body) => {
+        request.get({ url: self.loginFormUri, timeout: 5000, cancellationToken: new CancellationToken(), jar: self.jar }, (err, res, body) => {
             if (err && err.cancelled) {
                 return;
             }
-
-            var $ = cheerio.load(body);
-            var fields = {};
-            var $form = $('form');
-            $form.find('input').each((i, elem) => {
-                let inputName = $(elem).attr('name');
-                if (inputName) {
-                    let inputNameLower = inputName.toLowerCase();
-                    if (inputNameLower.indexOf("user") !== -1 || fieldsUser.includes(inputNameLower)) {
-                        fields.user = inputName;
-                    } else {
-                        if (inputNameLower.indexOf("password") !== -1 || fieldsPassword.includes(inputNameLower)) {
-                            let attrType = $(elem).attr('type');
-                            if (attrType == 'password') {
-                                fields.password = inputName;
-                                fields.action = $form.attr('action'); // this form is very probably a login form
-                            }
-                        } else {
-                            if (fieldsCsrf.includes(inputNameLower)) {
-                                let attrType = $(elem).attr('type');
-                                if (attrType == 'hidden') {
-                                    let attrValue = $(elem).attr('value');
-                                    if (attrValue) {
-                                        fields.csrf = inputName;
-                                        fields.csrf_value = attrValue;
-                                    }
-                                }
+            let ivs = inputVector.parseHtml(body);
+            for (let iv of ivs) {
+                for (let field of iv.fields) {
+                    let fieldNameLower = '';
+                    if (field.name) fieldNameLower = field.name.toLowerCase();
+                    if (fieldNameLower.indexOf("user") !== -1 || fieldsUser.includes(fieldNameLower)) {
+                        iv.userField = field.name;
+                    }
+                    else if (fieldNameLower.indexOf("password") !== -1 || fieldsPassword.includes(fieldNameLower)) {
+                        if (field.type.toLowerCase() == "password") {
+                            iv.passwordField = field.name;
+                        }
+                    }
+                    else if (fieldsCsrf.includes(fieldNameLower)) {
+                        if (field.type.toLowerCase() == "hidden") {
+                            if (field.value) {
+                                iv.csrfField = field.name;
+                                iv.csrfValue = field.value;
                             }
                         }
                     }
                 }
-            });
 
-            if (fields.action) {
-                callback(null, { fields: fields, jar: jar });
-            } else {
-                callback(null, null);
+                if (iv.url && iv.passwordField) {
+                    self.loginInputVector = iv;
+                    callback(null, { fields: self.fields, jar: self.jar });
+                    return;
+                }
+            }
+
+            callback(null, null);
+        });
+    }
+
+    login(callback) {
+        var self = this;
+        var iv = this.loginInputVector;
+        if (!iv.url || !iv.passwordField) throw new Error("this.loginInputVector.url or this.loginInputVector.passwordField are not set. Login operation aborted.");
+        var req_func;
+        if (iv.method && iv.method == "post") req_func = request.post;
+        else req_func = request.get;
+
+        var f = {};
+        f[iv.userField] = 'v.crasnier@peoleo.fr';
+        f[iv.passwordField] = 'azerty123';
+        f[iv.csrfField] = iv.csrfValue;
+
+        var action = Url.resolve(this.loginFormUri, iv.url);
+        req_func({
+            url: action, timeout: 5000, cancellationToken: new CancellationToken(),
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'accept-encoding': 'gzip, deflate, br',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+            },
+            form: f,
+            jar: self.jar
+        }, (err, res, body) => {
+            if (err && err.cancelled) {
+                return;
+            }
+
+            if (res.statusCode == 302) {
+                request.get({
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded',
+                        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'accept-encoding': 'gzip, deflate, br',
+                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+                    },
+                    url: "https://twitter.com/",
+                    timeout: 1000,
+                    cancellationToken: new CancellationToken(),
+                    jar : self.jar
+                }, function (err, res, body2) {
+                    if (!err && res.statusCode == 200) {
+                        var re = body2.match(/class=\"DashboardProfileCard/i);
+                        if (re) {
+                            callback(null, true);
+                        }
+                        else {
+                            callback(new Error("not connected"), null);
+                        }
+                    }
+                });
             }
         });
     }

@@ -76,7 +76,7 @@ describe('checks/server/check_bruteforce.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it('detects if bruteforce by basic auth works', function (done) {
+    it.skip('detects if bruteforce by basic auth works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
@@ -103,7 +103,7 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    it.only('detects if bruteforce by form works', function (done) {
+    it.skip('detects if bruteforce by form works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
@@ -130,7 +130,7 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    it('is cancellable', function (done) {
+    it.skip('is cancellable', function (done) {
         this.timeout(2000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 

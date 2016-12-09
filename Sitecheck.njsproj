@@ -35,13 +35,16 @@
     <Compile Include="src\app.js" />
     <Compile Include="src\autoLogin.js" />
     <Compile Include="src\cancellationToken.js" />
+    <Compile Include="src\checks\server\check_bruteforce.js" />
     <Compile Include="src\checks\server\check_csrf.js" />
+    <Compile Include="src\inputVector.js" />
     <Compile Include="src\issue.js" />
     <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\check_headers.js" />
     <Compile Include="src\target.js" />
     <Compile Include="src\constants.js" />
+    <Compile Include="test\checks\server\ut_bruteforce.js" />
     <Compile Include="test\checks\server\ut_csrf.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
@@ -63,12 +66,16 @@
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
     </Compile>
+    <Compile Include="test\ut_inputVector.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\ut_requestwrapper.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_target.js" />
     <Content Include="test\ut_data\.sitecheckrc1" />
     <Content Include="test\ut_data\ut_autoLogin\login.html" />
+    <Content Include="test\ut_data\ut_inputVector\twitter20161209.html" />
     <None Include=".licenseheader" />
     <Content Include=".coveralls.yml" />
     <Content Include=".travis.yml" />
@@ -87,6 +94,7 @@
     <Folder Include="test\checks\server\" />
     <Folder Include="test\ut_data\" />
     <Folder Include="test\ut_data\ut_autoLogin\" />
+    <Folder Include="test\ut_data\ut_inputVector\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\async\" />
