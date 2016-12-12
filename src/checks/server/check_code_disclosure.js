@@ -33,10 +33,10 @@ const GROOVY = 'Groovy';
 
 const SOURCE_CODE = [
     { "regEx": '<\\?php .*?\\?>', "language": PHP },
-    { "regEx": '<\\?php\n.*?\\?>', "language": PHP },
-    { "regEx": '<\\?php\r.*?\\?>', "language": PHP },
-    { "regEx": '<\\?php\n.*\n?\\?>', "language": PHP },
-    { "regEx": '<\\?php\r.*\r?\\?>', "language": PHP },
+    { "regEx": '<\\?php\\n.*?\\?>', "language": PHP },
+    { "regEx": '<\\?php\\r.*?\\?>', "language": PHP },
+    { "regEx": '<\\?php\\n.*?\\n\\?>', "language": PHP },
+    { "regEx": '<\\?php\\r.*?\\r\\?>', "language": PHP },
     { "regEx": '<\\? .*?\\?>', "language": PHP },
     { "regEx": '<\\?\n.*?\\?>', "language": PHP },
     { "regEx": '<\\?\r.*?\\?>', "language": PHP },
@@ -82,7 +82,12 @@ module.exports = class CheckHeaders extends Check {
                 }
                 for (let reg in SOURCE_CODE) {
                     if (new RegExp(SOURCE_CODE[reg].regEx).test(body)) {
-                        self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language+" tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                        if (res.statusCode === 404) {
+                            self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
+                        }
+                        else {
+                            self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                        }
                     }
                 }
                 resolve();

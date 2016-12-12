@@ -35,7 +35,7 @@ function CancellationToken(parentToken) {
         * @param {Error} e - optional Error object
         */
         this.cancel = e => {
-            this.isCancellationReqested = true;
+            this.isCancellationRequested = true;
             if (e) {
                 resolve(e);
             }
