@@ -35,7 +35,7 @@ describe('auth', function () {
                     url: "https://twitter.com/sessions",
                     form: {
                         'session[username_or_email]': 'g.baudhuin@peoleo.fr',
-                        'session[password]': 'tSolar4oaw',
+                        'session[password]': 'tSolar4oaw2',
                         'remember_me': '1',
                         'return_to_ssl': 'true',
                         'scribe_log': '',

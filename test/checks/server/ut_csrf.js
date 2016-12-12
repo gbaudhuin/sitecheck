@@ -92,7 +92,7 @@ describe('checks/server/check_csrf.js', function () {
                     reject(e);
                 });
         });
-        let p2 = new Promise(function (resolve, reject) {
+       /* let p2 = new Promise(function (resolve, reject) {
             check = new check_csrf(new Target('http://localhost:8000/no_form', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct)
                 .then((issues) => {
@@ -107,7 +107,7 @@ describe('checks/server/check_csrf.js', function () {
                     console.log(123);
                     reject();
                 });
-        });
+        });*/
         /*
         let p3 = new Promise(function (resolve, reject) {
             check = new check_csrf(new Target('http://localhost:8000/no_connection_form', CONSTANTS.TARGETTYPE.SERVER));
