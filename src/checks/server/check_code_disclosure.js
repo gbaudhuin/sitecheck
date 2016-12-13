@@ -32,7 +32,7 @@ const PYTHON = 'Python';
 const GROOVY = 'Groovy';
 
 const SOURCE_CODE = [
-    { "regEx": '<\\?php .*?\\?>', "language": PHP },
+    { "regEx": '<\\?php .*? \\?>', "language": PHP },
     { "regEx": '<\\?php\\n.*?\\?>', "language": PHP },
     { "regEx": '<\\?php\\r.*?\\?>', "language": PHP },
     { "regEx": '<\\?php\\n.*?\\n\\?>', "language": PHP },
@@ -64,7 +64,9 @@ const SOURCE_CODE = [
     { "regEx": '<!--g:render', "language": GROOVY },
     { "regEx": 'def .*?\(.*?\):\n', "language": PYTHON },
     { "regEx": 'class .*?< .*?end', "language": RUBY }
-]
+];
+
+const BLACKLIST = ['xml', 'xpacket'];
 
 module.exports = class CheckHeaders extends Check {
     constructor(target) {
@@ -80,13 +82,18 @@ module.exports = class CheckHeaders extends Check {
                     reject(err);
                     return;
                 }
-                for (let reg in SOURCE_CODE) {
-                    if (new RegExp(SOURCE_CODE[reg].regEx).test(body)) {
-                        if (res.statusCode === 404) {
-                            self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
-                        }
-                        else {
-                            self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                for (let reg in SOURCE_CODE) if (SOURCE_CODE.hasOwnProperty(reg)) {
+                    let matched = body.match(new RegExp(SOURCE_CODE[reg].regEx, 'i'));
+                    if (matched) {
+                        for (let blacklist_item in BLACKLIST) {
+                            if (matched[0].indexOf(blacklist_item) === -1) {
+                                if (res.statusCode === 404) {
+                                    self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
+                                }
+                                else {
+                                    self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                                }
+                            }
                         }
                     }
                 }

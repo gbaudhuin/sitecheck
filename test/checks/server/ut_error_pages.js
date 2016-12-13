@@ -25,40 +25,37 @@ var http = require('http');
 var CancellationToken = require('../../../src/cancellationToken.js');
 
 var server = http.createServer(function (req, res) {
-    if (req.url == '/php_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<?pHp this is a php tag ?>');
-    } else if (req.url == '/php_tag_backslash') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<?php\n this is a php tag\n?>');
+    if (req.url == '/php_error') {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Stack trace:');
     }
-    else if (req.url == '/asp_jsp_code_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<% test %>');
+    else if (req.url == '/asp_error') {
+        res.writeHead(502, { 'Content-Type': 'text/plain' });
+        res.end('<h2> <i>Runtime Error</i> </h2></span>');
     }
-    else if (req.url == '/aspx_code_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<%@ test %>');
+    else if (req.url == '/aspx_error') {
+        res.writeHead(428, { 'Content-Type': 'text/plain' });
+        res.end('<b> Description: </b>An unhandled exception occurred during the execution of the current web request');
     }
-    else if (req.url == '/java_import') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('import java.util.swing');
+    else if (req.url == '/java_error') {
+        res.writeHead(512, { 'Content-Type': 'text/plain' });
+        res.end('java.lang.NullPointerException');
     }
     else if (req.url == '/no_problem') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<div> This is a div </div>');
     }
-    else if (req.url == '/not_found') {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('<?php 404 ?>');
-    }
     else if (req.url == '/cancelled') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('');
     }
-    else if (req.url == '/blacklist') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<?php <?xml>this is a php tag ?>');
+    else if (req.url == '/regex_found') {
+        res.writeHead(430, { 'Content-Type': 'text/plain', 'Server': 'Apache/2.4.10 (Debian)' });
+        res.end('<address>aeuaehjaieja</address>');
+    }
+    else if (req.url == '/exotic_code') {
+        res.writeHead(810, { 'Content-Type': 'text/plain' });
+        res.end('');
     }
     else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -66,21 +63,21 @@ var server = http.createServer(function (req, res) {
     }
 });
 
-describe('checks/server/check_code_disclosure.js', function () {
+describe('checks/server/check_error_pages.js', function () {
     before(function () {
         server.listen(8000);
     });
 
-    it('detects code disclosure', function (done) {
+    it.only('detects error pages', function (done) {
         this.timeout(2000);
-        var check_code_disclosure = require('../../../src/checks/server/check_code_disclosure.js');
+        var check_error_pages = require('../../../src/checks/server/check_error_pages.js');
 
         var ct = new CancellationToken();
         var ct2 = new CancellationToken();
 
 
         let p1 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag', CONSTANTS.TARGETTYPE.SERVER));
+            let check = new check_error_pages(new Target('http://localhost:8000/php_error', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct).then((issues) => {
                 if (!issues)
                     reject(new Error("unexpected issue(s) raised"));
@@ -90,7 +87,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
 
         let p2 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/asp_jsp_code_tag', CONSTANTS.TARGETTYPE.SERVER));
+            let check = new check_error_pages(new Target('http://localhost:8000/asp_error', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct).then((issues) => {
                 if (!issues) reject(new Error("expected issue not raised"));
                 else resolve();
@@ -98,7 +95,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
 
         let p3 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/aspx_code_tag', CONSTANTS.TARGETTYPE.SERVER));
+            let check = new check_error_pages(new Target('http://localhost:8000/aspx_error', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct).then((issues) => {
                 if (!issues) reject(new Error("expected issue not raised"));
                 else resolve();
@@ -106,7 +103,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
 
         let p4 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag_backslash', CONSTANTS.TARGETTYPE.SERVER));
+            let check = new check_error_pages(new Target('http://localhost:8000/java_error', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct).then((issues) => {
                 if (!issues)
                     reject(new Error("unexpected issue(s) raised"));
@@ -116,37 +113,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
 
         let p5 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/java_import', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p6 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/no_problem', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p7 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/not_found', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p8 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
+            let check = new check_error_pages(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct2)
                 .then(() => {
                     reject();
@@ -156,8 +123,18 @@ describe('checks/server/check_code_disclosure.js', function () {
                 });
         });
 
-        let p9 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/blacklist', CONSTANTS.TARGETTYPE.SERVER));
+        let p6 = new Promise(function (resolve, reject) {
+            let check = new check_error_pages(new Target('http://localhost:8000/no_problem', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        let p7 = new Promise(function (resolve, reject) {
+            let check = new check_error_pages(new Target('http://localhost:8000/regex_found', CONSTANTS.TARGETTYPE.SERVER));
             check.check(ct).then((issues) => {
                 if (!issues)
                     reject(new Error("unexpected issue(s) raised"));
@@ -166,14 +143,24 @@ describe('checks/server/check_code_disclosure.js', function () {
             });
         });
 
-        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
+        let p8 = new Promise(function (resolve, reject) {
+            let check = new check_error_pages(new Target('http://localhost:8000/exotic_code', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8])
             .then(() => {
                 done();
             })
             .catch(() => {
                 done(new Error('fail'));
             });
-            ct2.cancel();
+        ct2.cancel();
     });
 
     after(function () {

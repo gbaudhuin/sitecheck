@@ -41,7 +41,7 @@ var server = http.createServer(function (req, res) {
         res.end('<form action="/session" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/><input type="hidden" name="tok" value="' + Token() + '"/></form>');
     } else if (req.url == '/session') {
-        var cookies = parseCookies(req);
+        let cookies = parseCookies(req);
         if (cookies.sessid && cookies.sessid == sessid) {
             var body = '';
 
@@ -70,7 +70,7 @@ var server = http.createServer(function (req, res) {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end('<html><head><body>content<body></head></html>');
     } else if (req.url == '/csrf_ok') {
-        var cookies = parseCookies(req);
+        let cookies = parseCookies(req);
         if (cookies.sessid && cookies.sessid == sessid) {
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
@@ -135,7 +135,7 @@ function parseCookies(request) {
     rc && rc.split(';').forEach(function (cookie) {
         var parts = cookie.split('=');
         list[parts.shift().trim()] = decodeURI(parts.join('='));
-    });
+    });// jshint ignore:line
 
     return list;
 }

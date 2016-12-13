@@ -38,6 +38,14 @@ module.exports = class CheckHeaders extends Check {
                 if (!res.headers['x-frame-options']) {
                     self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
                 }
+
+                if(!res.headers['x-content-type-options']){
+                    self._raiseIssue("x_content_type_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
+                } 
+                
+                if(res.headers['x-content-type-options'] && (res.headers['x-content-type-options']).toLowerCase() !== 'nosniff'){
+                    self._raiseIssue("x_content_type_options_missing.xml", null, "X-Content-Type-Options found but value is no nosniff, consider changing that '" + res.request.uri.href + "'", true);
+                }
                 resolve();
             });
         });
