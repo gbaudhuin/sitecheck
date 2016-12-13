@@ -18,9 +18,9 @@
 
 var http = require('http');
 var fs = require('fs-extra');
-var AutoLogin = require('../src/autoLogin.js');
+var autoLogin = require('../src/autoLogin.js');
 var tough = require('tough-cookie');
-
+var async = require('async');
 var server = http.createServer(function (req, res) {
     if (req.url == '/login') {
         var contents = fs.readFileSync(__dirname + "/ut_data/ut_autoLogin/login.html", 'utf8');
@@ -50,26 +50,48 @@ var server = http.createServer(function (req, res) {
     }
 });
 
-describe('AutoLogin class', function () {
+describe('AutoLogin module', function () {
     before(function () {
         server.listen(8000);
     });
 
-    it('#findFormData', function (done) {
-        this.timeout(5000);
+    
+    it.only('is able to log into various real world websites', function (done) {
+        this.timeout(10000);
 
-        //var autoLogin = new AutoLogin('http://localhost:8000/login');
-        var autoLogin = new AutoLogin('https://twitter.com/');
-        autoLogin.findLoginInputVector((err, data) => {
-         //   if (data.fields.user == "user123") done();
-          //  else done(new Error("user field no found"));
+        // GOOGLE
+        // sitecheck.ut@gmail.com
+        // sitechec
 
-            autoLogin.login((err, data) => {
-                done(err);
+        // TWITTER
+        // sitecheck.ut@gmail.com
+        // sitechec
+
+        var accounts = [
+            { name: 'Twitter', url: 'https://twitter.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://twitter.com/', loggedInCheckRegex: /class=\"DashboardProfileCard/i },
+            { name: 'Github', url: 'https://github.com/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec1', loggedInCheckurl: 'https://github.com', loggedInCheckRegex: /aria-label=\"Create new/ },
+            { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?title=Special:UserLogin', user: 'SitecheckUt', password: 'sitechec1', loggedInCheckurl: 'https://en.wikipedia.org/wiki/Main_Page', loggedInCheckRegex: /pt-userpage/ },
+            { name: 'LinkedIn', url: 'https://www.linkedin.com/uas/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.linkedin.com/', loggedInCheckRegex: /ozidentity-container/ },
+         //   { name: 'Amazon', url: 'https://www.amazon.fr/ap/signin?_encoding=UTF8&openid.assoc_handle=frflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.fr%2F%3Fref_%3Dnav_ya_signin', user: 'sitecheck.ut@gmail.com', password: 'Sitechec', loggedInCheckurl: 'https://www.amazon.fr/?ref_=nav_ya_signin&', loggedInCheckRegex: /nav_youraccount_btn/ },
+          //  { name: 'Facebook', url: 'https://www.facebook.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.facebook.com/', loggedInCheckRegex: /id=\"stream_pagelet/i }
+        ];
+
+        async.each(accounts, function (account, callback) {
+            autoLogin(account.url, account.user, account.password, account.loggedInCheckurl, account.loggedInCheckRegex, (err, data) => {
+                if (err) {
+                    callback(new Error(account.name + " login failed."));
+                } else {
+                    callback();
+                }
             });
+        }, function (err) {
+            // if any of the accounts failed login, err would equal the login error
+            if (err) {
+                done(err);
+            } else {
+                done();
+            }
         });
-
-
     });
     
     after(function () {
