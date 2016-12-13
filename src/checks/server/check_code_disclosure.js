@@ -83,8 +83,7 @@ module.exports = class CheckHeaders extends Check {
                     return;
                 }
                 for (let reg in SOURCE_CODE) {
-                    let regex = new RegExp(SOURCE_CODE[reg].regEx, 'i');
-                    let matched = body.match(regex);
+                    let matched = body.match(new RegExp(SOURCE_CODE[reg].regEx, 'i'));
                     if (matched) {
                         for (let blacklist_item in BLACKLIST) {
                             if (matched[0].indexOf(blacklist_item) === -1) {
