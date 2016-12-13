@@ -73,7 +73,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         server.listen(8000);
     });
 
-    it.only('detects code disclosure', function (done) {
+    it('detects code disclosure', function (done) {
         this.timeout(2000);
         var check_code_disclosure = require('../../../src/checks/server/check_code_disclosure.js');
 

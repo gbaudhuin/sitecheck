@@ -56,7 +56,7 @@ describe('AutoLogin module', function () {
     });
 
     
-    it.only('is able to log into various real world websites', function (done) {
+    it('is able to log into various real world websites', function (done) {
         this.timeout(10000);
 
         // GOOGLE
