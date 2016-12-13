@@ -60,7 +60,7 @@ describe('checks/server/check_headers.js', function () {
         server.listen(8000);
     });
 
-    it.only('detects missing X-Frame-Options, X-Content-Type-Options headers', function (done) {
+    it('detects missing X-Frame-Options, X-Content-Type-Options headers', function (done) {
         this.timeout(2000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
 
@@ -129,7 +129,7 @@ describe('checks/server/check_headers.js', function () {
             });
     });
 
-    it.only('is cancellable', function (done) {
+    it('is cancellable', function (done) {
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
         var ct = new CancellationToken();
