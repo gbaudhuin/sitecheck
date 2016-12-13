@@ -51,7 +51,6 @@ var headers = {
  * A module that automatically finds login form in a webpage and gets connection data to allow subsequent automatic login to a website
  */
 
-
 /**
     * Tries to find login forms in a page.
     * The callbakc is called with (null, {inputVector, cookieJar}) on the first login form that is found. Corresponding InputVector is stored in the class along with session cookies.
@@ -68,21 +67,27 @@ function findLoginInputVector(absoluteLoginFormUri, cookieJar, callback) {
         // get the list of all forms of the page
         let ivs = inputVector.parseHtml(body);
         for (let iv of ivs) {
+            let passwordFieldsCount = 0;
             for (let field of iv.fields) {
                 let fieldNameLower = '';
                 let fieldTypeLower = '';
                 if (field.name) fieldNameLower = field.name.toLowerCase();
                 if (field.type) fieldTypeLower = field.type.toLowerCase();
-                // note : html default input type is "text" : if no type attribute is found, consider it text field.
+                // note : html default input type is "text" : if no type attribute is found, consider a text field.
                 if ((fieldTypeLower == "" || fieldTypeLower == "text" || fieldTypeLower == "email" ) && (fieldNameLower.indexOf("user") !== -1 || fieldNameLower.indexOf("name") !== -1 || fieldNameLower.indexOf("mail") !== -1 || fieldNameLower.indexOf("key") !== -1 || fieldsUser.includes(fieldNameLower))) {
                     iv.userField = field.name;
                 }
                 else if (fieldTypeLower == "password") {
                     iv.passwordField = field.name;
+                    passwordFieldsCount++;
                 }
             }
 
-            if (iv.url && iv.passwordField) {
+            if (!iv.url) {
+                iv.url = absoluteLoginFormUri;
+            }
+
+            if (iv.passwordField && passwordFieldsCount == 1) { // if passwordFieldsCount == 2, we probably have an account creation form instead of a login form
                 callback(null, { inputVector: iv, cookieJar: cookieJar });
                 return;
             }
@@ -96,7 +101,7 @@ function login(absoluteLoginFormUri, user, password, loggedInCheckUrl, loggedInC
     if (absoluteLoginFormUri && isRelativeUrl(absoluteLoginFormUri)) {
         callback(new Error("absoluteLoginFormUri cannot be relative. absoluteLoginFormUri must be absolute."));
     }
-    var cookieJar = true;//request.jar();
+    var cookieJar = request.jar();
 
     findLoginInputVector(absoluteLoginFormUri, cookieJar, (err, data) => {
         if (err) callback(err);
@@ -124,32 +129,30 @@ function login(absoluteLoginFormUri, user, password, loggedInCheckUrl, loggedInC
                 headers: headers,
                 form: f,
                 jar: cookieJar,
-                followRedirect:false
+                followRedirect: false
             }, (err, res, body) => {
                 if (err) {
                     callback(err);
                     return;
                 }
-             //   if (res.statusCode == 302) {
-                    request.get({
-                        headers: headers,
-                        url: loggedInCheckUrl,
-                        timeout: 1000,
-                        cancellationToken: new CancellationToken(),
-                        jar: cookieJar,
-                        gzip:true
-                    }, function (err, res, body2) {
-                        if (!err && res.statusCode == 200) {
-                            var re = body2.match(loggedInCheckRegex);
-                            if (re) {
-                                callback(null, true);
-                            }
-                            else {
-                                callback(new Error("not connected"), null);
-                            }
+                request.get({
+                    headers: headers,
+                    url: loggedInCheckUrl,
+                    timeout: 5000,
+                    cancellationToken: new CancellationToken(),
+                    jar: cookieJar,
+                    gzip: true
+                }, function (err, res, body2) {
+                    if (!err && res.statusCode == 200) {
+                        var re = body2.match(loggedInCheckRegex);
+                        if (re) {
+                            callback(null, { cookieJar: cookieJar });
                         }
-                    });
-              //  }
+                        else {
+                            callback(new Error("not connected"), null);
+                        }
+                    }
+                });
             });
         }
     });

@@ -75,6 +75,16 @@ function parseHtml(html) {
             f.fields.push(o);
         });
 
+        $form.find('button').each((i, elem) => {
+            if ($(elem).attr('type') && $(elem).attr('formaction')) {
+                if ($(elem).attr('type').toLowerCase() == "submit") {
+                    f.action = $(elem).attr('formaction');
+                }
+            }
+        });
+
+        // TODO : check uppercase attribute names are lowercased by cheerio
+
         var iv = new InputVector(f.action, f.name, f.method, f.fields);
         ret.push(iv);
     });

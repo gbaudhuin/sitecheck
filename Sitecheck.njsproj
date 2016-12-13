@@ -36,6 +36,7 @@
     <Compile Include="src\autoLogin.js" />
     <Compile Include="src\cancellationToken.js" />
     <Compile Include="src\checks\server\check_bruteforce.js" />
+    <Compile Include="src\checks\server\check_code_disclosure.js" />
     <Compile Include="src\checks\server\check_csrf.js" />
     <Compile Include="src\inputVector.js" />
     <Compile Include="src\issue.js" />
@@ -45,6 +46,9 @@
     <Compile Include="src\target.js" />
     <Compile Include="src\constants.js" />
     <Compile Include="test\checks\server\ut_bruteforce.js" />
+    <Compile Include="test\checks\server\ut_code_disclosure.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\checks\server\ut_csrf.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>

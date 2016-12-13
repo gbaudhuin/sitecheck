@@ -15,16 +15,75 @@
  * limitations under the License.
  */
 
-/*jshint expr: true*/
 'use strict';
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
-//var expect = require('chai').expect;
 var cancellationToken = require('../../../src/cancellationToken.js');
+var autoLogin = require('../../../src/autoLogin.js');
+var qs = require('querystring');
+var tough = require('tough-cookie');
+var request = require('../../../src/requestwrapper.js');
+
+var ut_user = "SitecheckUt";
+var ut_password = "sitechec";
+var sessid = Token();
+var csrftoken = Token();
 
 var server = http.createServer(function (req, res) {
-    if (req.url == '/csrf_ok') {
+    if (req.url == '/login') {
+        var cookiejar = new tough.CookieJar();
+        var c = new tough.Cookie({ key: 'sessid', value: sessid, maxAge: "86400" });
+        cookiejar.setCookieSync(c, 'http://localhost:8000' + req.url);
+        var cookieStr = cookiejar.getCookiesSync('http://localhost:8000' + req.url);
+        res.writeHead(200, { "Content-Type": "text/html", 'set-cookie': cookieStr });
+
+        res.end('<form action="/session" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/><input type="hidden" name="tok" value="' + Token() + '"/></form>');
+    } else if (req.url == '/session') {
+        var cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            var body = '';
+
+            req.on('data', function (data) {
+                body += data;
+
+                // Prevent malicious flooding
+                if (body.length > 1e6) req.connection.destroy();
+            });
+
+            req.on('end', function () {
+                var post = qs.parse(body);
+                if (post.password == ut_password && post.username == ut_user) {
+                    res.writeHead(302, { 'Location': '/content' });
+                    res.end('bad request : wrong sessid');
+                } else {
+                    res.writeHead(403);
+                    res.end('bad request : wrong sessid');
+                }
+            });
+        } else {
+            res.writeHead(403);
+            res.end('bad request : wrong sessid');
+        }
+    } else if (req.url == '/content') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<html><head><body>content<body></head></html>');
+    } else if (req.url == '/csrf_ok') {
+        var cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/></form>');
+        } else {
+            res.writeHead(403);
+            res.end('Restricted access');
+        }
+    } else {
+        res.writeHead(404);
+        res.end('wrong request');
+    }
+    /*if (req.url == '/csrf_ok') {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + Token() + '"/></form>');
@@ -54,7 +113,7 @@ var server = http.createServer(function (req, res) {
     }
     else {
         res.end('wrong request');
-    }
+    }*/
 });
 
 function Token() {
@@ -69,6 +128,18 @@ function Token() {
     return token();
 }
 
+function parseCookies(request) {
+    var list = {},
+        rc = request.headers.cookie;
+
+    rc && rc.split(';').forEach(function (cookie) {
+        var parts = cookie.split('=');
+        list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return list;
+}
+
 describe('checks/server/check_csrf.js', function () {
     this.timeout(15000);
     before(() => {
@@ -77,6 +148,54 @@ describe('checks/server/check_csrf.js', function () {
     it('detects missing CSRF token', (done) => {
         var ct = new cancellationToken();
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
+                let p1 = new Promise(function (resolve, reject) {
+                    check.check(ct)
+                        .then((issues) => {
+                            if (issues) {
+                                reject(new Error('Unexpected issue happened'));
+                            }
+                            else {
+                                resolve();
+                            }
+                        })
+                        .catch((e) => {
+                            reject(e);
+                        });
+                });
+
+
+                Promise.all([p1])
+                    .then(() => {
+                        done();
+                    })
+                    .catch((e) => {
+                        done(e);
+                    });
+            }
+        });
+
+        /*
+        check_csrf.authData = { url: 'https://www.reddit.com/', user: 'SitecheckUt', password: 'sitechec', loggedInCheckurl: 'https://www.reddit.com/', loggedInCheckRegex: /reddit.com\/\logout/ };
         var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
         let p1 = new Promise(function (resolve, reject) {
             check.check(ct)
@@ -92,109 +211,8 @@ describe('checks/server/check_csrf.js', function () {
                     reject(e);
                 });
         });
-       /* let p2 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/no_form', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct)
-                .then((issues) => {
-                    if (issues) {
-                        reject(new Error('Unexpected issue happened'));
-                    }
-                    else {
-                        resolve();
-                    }
-                })
-                .catch(() => {
-                    console.log(123);
-                    reject();
-                });
-        });*/
-        /*
-        let p3 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/no_connection_form', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.false;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-        let p4 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/no_hidden', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-        let p5 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8001/not_reachable', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-        let p6 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/crsf_doesnt_change', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-        let p7 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/no_csrf_token', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-        let p8 = new Promise(function (resolve, reject) {
-            check = new check_csrf(new Target('http://localhost:8000/timeout_occured', CONSTANTS.TARGETTYPE.SERVER));
-            check.setHook("OnRaiseIssue", function () {
-                issueRaised = true;
-            });
-            check.check()
-                .then(() => {
-                    expect(issueRaised).to.be.true;
-                    resolve();
-                })
-                .catch(() => {
-                    reject();
-                });
-        });
-*/
-        Promise.all([p1/*, p3, p4, p5, p6, p7, p8*/])
+
+        Promise.all([p1])
             .then(() => {
                 console.log(123);
                 done();
@@ -203,7 +221,7 @@ describe('checks/server/check_csrf.js', function () {
                 console.log(456);
                 done(e);
             });
-
+        */
     });
     
     after(() => {

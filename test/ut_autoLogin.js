@@ -57,23 +57,23 @@ describe('AutoLogin module', function () {
 
     
     it.only('is able to log into various real world websites', function (done) {
-        this.timeout(10000);
+        this.timeout(30000);
 
         // GOOGLE
         // sitecheck.ut@gmail.com
         // sitechec
-
-        // TWITTER
-        // sitecheck.ut@gmail.com
-        // sitechec
-
         var accounts = [
+            { name: 'Reddit', url: 'https://www.reddit.com/', user: 'SitecheckUt', password: 'sitechec', loggedInCheckurl: 'https://www.reddit.com/', loggedInCheckRegex: /reddit.com\/\logout/ },
+            { name: 'WooCommerce', url: 'https://woocommerce.com/my-account/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://woocommerce.com/my-account/', loggedInCheckRegex: /header-menu-logout/ },
             { name: 'Twitter', url: 'https://twitter.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://twitter.com/', loggedInCheckRegex: /class=\"DashboardProfileCard/i },
             { name: 'Github', url: 'https://github.com/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec1', loggedInCheckurl: 'https://github.com', loggedInCheckRegex: /aria-label=\"Create new/ },
             { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?title=Special:UserLogin', user: 'SitecheckUt', password: 'sitechec1', loggedInCheckurl: 'https://en.wikipedia.org/wiki/Main_Page', loggedInCheckRegex: /pt-userpage/ },
             { name: 'LinkedIn', url: 'https://www.linkedin.com/uas/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.linkedin.com/', loggedInCheckRegex: /ozidentity-container/ },
-         //   { name: 'Amazon', url: 'https://www.amazon.fr/ap/signin?_encoding=UTF8&openid.assoc_handle=frflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.fr%2F%3Fref_%3Dnav_ya_signin', user: 'sitecheck.ut@gmail.com', password: 'Sitechec', loggedInCheckurl: 'https://www.amazon.fr/?ref_=nav_ya_signin&', loggedInCheckRegex: /nav_youraccount_btn/ },
-          //  { name: 'Facebook', url: 'https://www.facebook.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.facebook.com/', loggedInCheckRegex: /id=\"stream_pagelet/i }
+            
+            // failed ones :
+            // unknown cause (bad action url ?) : { name: 'Pinterest', url: 'https://fr.pinterest.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://fr.pinterest.com/', loggedInCheckRegex: /usernameLink/},
+            // unknown cause { name: 'Amazon', url: 'https://www.amazon.fr/ap/signin?_encoding=UTF8&openid.assoc_handle=frflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.fr%2F%3Fref_%3Dnav_ya_signin', user: 'sitecheck.ut@gmail.com', password: 'Sitechec', loggedInCheckurl: 'https://www.amazon.fr/?ref_=nav_ya_signin&', loggedInCheckRegex: /nav_youraccount_btn/ },
+            // No js (seems to try to detect cookies via js) : { name: 'Facebook', url: 'https://www.facebook.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.facebook.com/', loggedInCheckRegex: /id=\"stream_pagelet/i }
         ];
 
         async.each(accounts, function (account, callback) {
