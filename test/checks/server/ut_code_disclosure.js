@@ -29,7 +29,7 @@ var CancellationToken = require('../../../src/cancellationToken.js');
 var server = http.createServer(function (req, res) {
     if (req.url == '/php_tag') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('<?php this is a php tag ?>');
+        res.end('<?pHp this is a php tag ?>');
     } else if (req.url == '/php_tag_backslash') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<?php\n this is a php tag\n?>');
@@ -57,6 +57,10 @@ var server = http.createServer(function (req, res) {
     else if (req.url == '/cancelled') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('');
+    }
+    else if (req.url == '/blacklist') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('<?php <?xml>this is a php tag ?>');
     }
     else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -154,7 +158,17 @@ describe('checks/server/check_code_disclosure.js', function () {
                 });
         });
 
-        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8])
+        let p9 = new Promise(function (resolve, reject) {
+            let check = new check_code_disclosure(new Target('http://localhost:8000/blacklist', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (!issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
             .then(() => {
                 done();
             })
