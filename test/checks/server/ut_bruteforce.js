@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-/*jshint expr: true*/
 'use strict';
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');

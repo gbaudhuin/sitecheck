@@ -16,8 +16,6 @@
  */
 "use strict";
 
-/* jshint expr:true */ // no jshint warnings on chai 'expect' expressions
-
 const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
