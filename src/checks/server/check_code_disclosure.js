@@ -83,17 +83,16 @@ module.exports = class CheckHeaders extends Check {
                     return;
                 }
                 for (let reg in SOURCE_CODE) {
-                    if (new RegExp(SOURCE_CODE[reg].regEx, 'i').test(body)) {
+                    let regex = new RegExp(SOURCE_CODE[reg].regEx, 'i');
+                    let matched = body.match(regex);
+                    if (matched) {
                         for (let blacklist_item in BLACKLIST) {
-                            let matched = body.match(new RegExp(SOURCE_CODE[reg].regEx, 'i'));
-                            if (matched) {
-                                if (matched[0].indexOf(blacklist_item) === -1) {
-                                    if (res.statusCode === 404) {
-                                        self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
-                                    }
-                                    else {
-                                        self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
-                                    }
+                            if (matched[0].indexOf(blacklist_item) === -1) {
+                                if (res.statusCode === 404) {
+                                    self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
+                                }
+                                else {
+                                    self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
                                 }
                             }
                         }
