@@ -30,6 +30,14 @@ var server = http.createServer(function (req, res) {
         res.end();
     } else if (req.url == '/xframeoptions_ko') {
         res.end();
+    } else if (req.url == '/xcontenttypeoptions_ok') {
+        res.writeHead(200, { 'X-Content-Type-Options': 'nosniff' });
+        res.end();
+    } else if (req.url == '/xcontenttypeoptions_partial') {
+        res.writeHead(200, { 'X-Content-Type-Options': 'sniff' });
+        res.end();
+    } else if (req.url == '/xcontenttypeoptions_ko') {
+        res.end();
     } else if (req.url == '/timeout') {
         setTimeout(function () {
             res.end();
@@ -38,6 +46,9 @@ var server = http.createServer(function (req, res) {
         setTimeout(function () {
             res.end();
         }, 2000);
+    } else if (req.url == '/everything_ok') {
+        res.writeHead(200, { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN'});
+        res.end();
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('wrong request');
@@ -49,18 +60,18 @@ describe('checks/server/check_headers.js', function () {
         server.listen(8000);
     });
 
-    it('detects missing X-Frame-Options headers', function (done) {
+    it.only('detects missing X-Frame-Options, X-Content-Type-Options headers', function (done) {
         this.timeout(2000);
         var check_headers = require('../../../src/checks/server/check_headers.js');
 
         var ct = new CancellationToken();
 
-        var check1 = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
-        var check2 = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+        let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
 
         let p1 = new Promise(function (resolve, reject) {
-            check1.check(ct).then((issues) => {
-                if (issues)
+            let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (!issues)
                     reject(new Error("unexpected issue(s) raised"));
                 else
                     resolve();
@@ -68,13 +79,48 @@ describe('checks/server/check_headers.js', function () {
         });
 
         let p2 = new Promise(function (resolve, reject) {
-            check2.check(ct).then((issues) => {
+            let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
                 if (!issues) reject(new Error("expected issue not raised"));
                 else resolve();
             });
         });
 
-        Promise.all([p1, p2])
+        let p3 = new Promise(function (resolve, reject) {
+            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (!issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        let p4 = new Promise(function (resolve, reject) {
+            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (!issues) reject(new Error("expected issue not raised"));
+                else resolve();
+            });
+        });
+
+        let p5 = new Promise(function (resolve, reject) {
+            let check = new check_headers(new Target('http://localhost:8000/everything_ok', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (issues) reject(new Error("expected issue not raised"));
+                else resolve();
+            });
+        });
+
+        let p6 = new Promise(function (resolve, reject) {
+            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_partial', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (!issues) reject(new Error("expected issue not raised"));
+                else resolve();
+            });
+        });
+
+        Promise.all([p1, p2, p3, p4, p5, p6])
             .then(() => {
                 done();
             })
@@ -83,7 +129,7 @@ describe('checks/server/check_headers.js', function () {
             });
     });
 
-    it('is cancellable', function (done) {
+    it.only('is cancellable', function (done) {
         var check_headers = require('../../../src/checks/server/check_headers.js');
         var check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
         var ct = new CancellationToken();

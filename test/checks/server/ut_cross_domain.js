@@ -53,7 +53,7 @@ describe('checks/server/check_cross_domain.js', function () {
         server.listen(8000);
     });
 
-    it.only('detects cross domain scripts', function (done) {
+    it('detects cross domain scripts', function (done) {
         this.timeout(2000);
         var check_cross_domain = require('../../../src/checks/server/check_cross_domain.js');
 
