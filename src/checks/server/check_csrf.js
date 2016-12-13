@@ -20,6 +20,7 @@ var Check = require('../../check');
 var request = require('request');
 var cheerio = require('cheerio');
 const CONSTANTS = require("../../constants.js");
+var autoLogin = require("../../autoLogin.js");
 
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
@@ -52,7 +53,6 @@ module.exports = class CheckCSRF extends Check {
             'csrfmiddlewaretoken',        // Django 1.5
             'form_key',                   // Magento 1.9
             'authenticity_token'          // Twitter
-
         ];
         this._entropy = 0;
         this._conf = {
@@ -83,7 +83,18 @@ module.exports = class CheckCSRF extends Check {
         var self = this;
         self._cancellationToken = cancellationToken;
         var timeout = 3000;
+
+        var login_url = "https://twitter.com/";
+
         return new Promise((resolve, reject) => {
+
+            var autoLogin = new AutoLogin(login_url);
+            autoLogin.findLoginInputVector((err, data) => {
+                autoLogin.login('v.crasnier@peoleo.fr', 'azerty123', (err, data) => {
+                    done(err);
+                });
+            });
+
             request.get({ url: self._conf.url, timeout: timeout, cancellationToken: cancellationToken, jar: true }, (err, res, body) => {
                 if (err && err.cancelled) {
                     reject(err);

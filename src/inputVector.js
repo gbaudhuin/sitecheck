@@ -27,12 +27,12 @@ class InputVector {
     /**
      * Constructor
      * @param {string} uri - action uri to pass the input data to.
-     * @param {string} method - 'get', 'post', 'header', put, delete, patch. upper case chars are automatically lowercased
+     * @param {string} method - 'GET', 'POST', 'HEADER', 'PUT', 'DELETE', 'PATCH'. lower case chars are automatically uppercased
      * @param {Object} fields - an array fields. Fields are literals defined this way : {name:'', type:'', value:''}
      */
     constructor(url, name, method, fields) {
         this.url = url; // action url
-        this.method = method; // http method : get, post, header, put, delete, patch
+        this.method = method; // http method : GET, POST, HEADER, PUT, DELETE, PATCH
         this.fields = fields;
     }
 
@@ -62,7 +62,7 @@ function parseHtml(html) {
         f.name = $form.attr('name');
         f.action = $form.attr('action');
         f.method = $form.attr('method');
-        if (f.method) f.method = f.method.toLowerCase();
+        if (f.method) f.method = f.method.toUpperCase();
         
         $form.find('input').each((i, elem) => {
             let o = {};
