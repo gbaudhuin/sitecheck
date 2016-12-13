@@ -103,7 +103,7 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    it.skip('detects if bruteforce by form works', function (done) {
+    it('detects if bruteforce by form works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
