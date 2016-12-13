@@ -18,10 +18,9 @@
 
 var Check = require('../../check');
 var request = require('request');
-//var request = require('../../requestwrapper.js');
 var cheerio = require('cheerio');
 const CONSTANTS = require("../../constants.js");
-var autoLogin = require("../../autoLogin.js");
+//var autoLogin = require("../../autoLogin.js");
 
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
@@ -99,9 +98,6 @@ module.exports = class CheckCSRF extends Check {
                         return;
                     }
                     // list forms
-
-                    var g = 89;
-                    
                 });
 
                 /*if (body.indexOf('<form') !== -1) {

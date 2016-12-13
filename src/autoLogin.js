@@ -22,8 +22,7 @@ var Url = require('url');
 var inputVector = require('./inputVector.js');
 
 var fieldsUser = ["user", "username", "name", "email", "log", "id", "login", "usr", "u"];
-var fieldsPassword = ["password", "pwd", "p", "pass"];
-var fieldsCsrf = [
+/*var fieldsCsrf = [
     'csrf_token',
     'csrfname',                   // OWASP CSRF_Guard
     'crsftoken',                  // OWASP CSRF_Guard
@@ -38,7 +37,7 @@ var fieldsCsrf = [
     'csrfmiddlewaretoken',        // Django 1.5
     'form_key',                   // Magento 1.9
     'authenticity_token'          // Twitter
-];
+];*/
 
 var headers = {
     'content-type': 'application/x-www-form-urlencoded',
@@ -74,7 +73,7 @@ function findLoginInputVector(absoluteLoginFormUri, cookieJar, callback) {
                 if (field.name) fieldNameLower = field.name.toLowerCase();
                 if (field.type) fieldTypeLower = field.type.toLowerCase();
                 // note : html default input type is "text" : if no type attribute is found, consider a text field.
-                if ((fieldTypeLower == "" || fieldTypeLower == "text" || fieldTypeLower == "email" ) && (fieldNameLower.indexOf("user") !== -1 || fieldNameLower.indexOf("name") !== -1 || fieldNameLower.indexOf("mail") !== -1 || fieldNameLower.indexOf("key") !== -1 || fieldsUser.includes(fieldNameLower))) {
+                if ((fieldTypeLower === "" || fieldTypeLower == "text" || fieldTypeLower == "email" ) && (fieldNameLower.indexOf("user") !== -1 || fieldNameLower.indexOf("name") !== -1 || fieldNameLower.indexOf("mail") !== -1 || fieldNameLower.indexOf("key") !== -1 || fieldsUser.includes(fieldNameLower))) {
                     iv.userField = field.name;
                 }
                 else if (fieldTypeLower == "password") {
