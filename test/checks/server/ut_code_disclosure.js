@@ -28,34 +28,34 @@ var CancellationToken = require('../../../src/cancellationToken.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/php_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<?php this is a php tag ?>');
     } else if (req.url == '/php_tag_backslash') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<?php\n this is a php tag\n?>');
     }
     else if (req.url == '/asp_jsp_code_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<% test %>');
     }
     else if (req.url == '/aspx_code_tag') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<%@ test %>');
     }
     else if (req.url == '/java_import') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('import java.util.swing');
     }
     else if (req.url == '/no_problem') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('<div> This is a div </div>');
     }
     else if (req.url == '/not_found') {
-        res.writeHead(404, { 'Content-Type': 'text/plain' })
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('<?php 404 ?>');
     }
     else if (req.url == '/cancelled') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('');
     }
     else {
