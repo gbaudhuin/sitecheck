@@ -53,6 +53,10 @@ var server = http.createServer(function (req, res) {
         res.writeHead(430, { 'Content-Type': 'text/plain', 'Server': 'Apache/2.4.10 (Debian)' });
         res.end('<address>aeuaehjaieja</address>');
     }
+    else if (req.url == '/regex_no_server') {
+        res.writeHead(430, { 'Content-Type': 'text/plain'});
+        res.end('<address>aeuaehjaieja</address>');
+    }
     else if (req.url == '/exotic_code') {
         res.writeHead(810, { 'Content-Type': 'text/plain' });
         res.end('');
@@ -153,7 +157,17 @@ describe('checks/server/check_error_pages.js', function () {
             });
         });
 
-        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8])
+        let p9 = new Promise(function (resolve, reject) {
+            let check = new check_error_pages(new Target('http://localhost:8000/regex_no_server', CONSTANTS.TARGETTYPE.SERVER));
+            check.check(ct).then((issues) => {
+                if (issues)
+                    reject(new Error("unexpected issue(s) raised"));
+                else
+                    resolve();
+            });
+        });
+
+        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
             .then(() => {
                 done();
             })

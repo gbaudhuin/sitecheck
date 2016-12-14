@@ -98,7 +98,7 @@ module.exports = class CheckHeaders extends Check {
                     return;
                 }
                 for (let reg in VERSION_REGEX) {
-                    if (400 < parseInt(res.statusCode, 10) < 600) {
+                    if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
                         let matched = body.match(new RegExp(VERSION_REGEX[reg].regEx, 'i'));
                         if (matched) {
                             if(res.headers["server"])
@@ -108,7 +108,7 @@ module.exports = class CheckHeaders extends Check {
                 }
 
                 for (let error in ERROR_PAGES) {
-                    if (400 < parseInt(res.statusCode, 10) < 600) {
+                    if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
                         if (body.indexOf(ERROR_PAGES[error]) !== -1) {
                             self._raiseIssue("error_pages.xml", null, "Descriptive error page found at Url '" + res.request.uri.href + "'", true);
                         }
