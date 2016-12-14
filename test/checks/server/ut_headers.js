@@ -66,7 +66,7 @@ describe('checks/server/check_headers.js', function () {
 
         var ct = new CancellationToken();
 
-        let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+        //let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
 
         let p1 = new Promise(function (resolve, reject) {
             let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));

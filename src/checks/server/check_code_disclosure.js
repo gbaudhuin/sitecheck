@@ -82,7 +82,7 @@ module.exports = class CheckHeaders extends Check {
                     reject(err);
                     return;
                 }
-                for (let reg in SOURCE_CODE) {
+                for (let reg in SOURCE_CODE) if (SOURCE_CODE.hasOwnProperty(reg)) {
                     let matched = body.match(new RegExp(SOURCE_CODE[reg].regEx, 'i'));
                     if (matched) {
                         for (let blacklist_item in BLACKLIST) {

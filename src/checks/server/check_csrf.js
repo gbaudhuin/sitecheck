@@ -20,7 +20,7 @@ var Check = require('../../check');
 var request = require('request');
 var cheerio = require('cheerio');
 const CONSTANTS = require("../../constants.js");
-var autoLogin = require("../../autoLogin.js");
+//var autoLogin = require("../../autoLogin.js");
 
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
@@ -54,7 +54,7 @@ module.exports = class CheckCSRF extends Check {
             'form_key',                   // Magento 1.9
             'authenticity_token'          // Twitter
         ];
-        this._entropy = 0;
+       // this._entropy = 0;
         this._conf = {
             "url": "https://twitter.com",
             "connectionUrl": "https://twitter.com/sessions",
@@ -84,31 +84,31 @@ module.exports = class CheckCSRF extends Check {
         self._cancellationToken = cancellationToken;
         var timeout = 3000;
 
-        var login_url = "https://twitter.com/";
-
         return new Promise((resolve, reject) => {
-
-            var autoLogin = new AutoLogin(login_url);
-            autoLogin.findLoginInputVector((err, data) => {
-                autoLogin.login('v.crasnier@peoleo.fr', 'azerty123', (err, data) => {
-                    done(err);
-                });
-            });
-
-            request.get({ url: self._conf.url, timeout: timeout, cancellationToken: cancellationToken, jar: true }, (err, res, body) => {
-                if (err && err.cancelled) {
+            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: request.sessionJar }, (err, res, body) => {
+                if (err) {
                     reject(err);
                     return;
                 }
-                if (body.indexOf('<form') !== -1) {
+                // list forms
+                // if forms : 
+                request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: null }, (err, res, body) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    // list forms
+                });
+
+                /*if (body.indexOf('<form') !== -1) {
                     let $ = cheerio.load(body);
                     $('form').each(function (f, elem) {
-                        if ($(elem).attr('action') == self._conf.connectionUrl) {
+                        if ($(elem).attr('action') == self.target.url) {
                             self._conf.form.authenticity_token = ($(elem).find('input[name=' + self._conf.connectionToken + ']').attr('value'));
                         }
                         resolve();
                     });
-                }
+                }*/
             });
             /*.then(self.checkIfPageHasAForm.bind(self))
             .then(self.checkIfFormIsAConnectionForm.bind(self))

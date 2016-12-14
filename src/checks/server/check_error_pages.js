@@ -80,7 +80,7 @@ const VERSION_REGEX = [
     { "regEx": '<HR size="1" noshade="noshade"><h3>(.*?)</h3></body>', "server": "Apache Tomcat" },
     { "regEx": '<a href="http://www.microsoft.com/ContentRedirect.asp\?prd=iis&sbp=&pver=(.*?)&pid=&ID', "server": 'IIS' },
     { "regEx": '<b>Version Information:</b>&nbsp;(.*?)\n', "server": 'ASP .NET' }
-]
+];
 
 
 module.exports = class CheckHeaders extends Check {
@@ -101,8 +101,8 @@ module.exports = class CheckHeaders extends Check {
                     if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
                         let matched = body.match(new RegExp(VERSION_REGEX[reg].regEx, 'i'));
                         if (matched) {
-                            if(res.headers["server"])
-                            self._raiseIssue("error_pages.xml", null, VERSION_REGEX[reg].server + " server found with version '" + res.headers["Server"] + "' at Url '" + res.request.uri.href + "'", true);
+                            if(res.headers.server)
+                            self._raiseIssue("error_pages.xml", null, VERSION_REGEX[reg].server + " server found with version '" + res.headers.server + "' at Url '" + res.request.uri.href + "'", true);
                         }
                     }
                 }

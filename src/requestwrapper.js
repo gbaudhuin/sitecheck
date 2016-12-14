@@ -123,5 +123,6 @@ request.Request = request_orig.Request;
 request.initParams = request_orig.initParams;
 request.cookie = request_orig.cookie;
 request.jar = request_orig.jar;
+request.defaults = request_orig.defaults;
 
 module.exports = request;

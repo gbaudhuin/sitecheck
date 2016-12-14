@@ -129,7 +129,7 @@ module.exports = class CheckHeaders extends Check {
                 }
                 let $ = cheerio.load(body);
                 $('script').each(function () {
-                    for (let reg in SECURED_DOMAINS) {
+                    for (let reg in SECURED_DOMAINS) if (SECURED_DOMAINS.hasOwnProperty(reg)) {
                         let currentDomain = self.extractDomain(self.target.uri);
                         let matched = $(this).attr('src');
                         if (matched !== undefined) {
