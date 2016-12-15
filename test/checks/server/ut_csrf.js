@@ -73,12 +73,88 @@ var server = http.createServer(function (req, res) {
         let cookies = parseCookies(req);
         if (cookies.sessid && cookies.sessid == sessid) {
             res.writeHead(200, { "Content-Type": "text/html" });
-            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
-                '<input type="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/></form>');
+            res.end('<html><body><form action="/abcd"><input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/> ' +
+                '</form></body></html>');
         } else {
-            res.writeHead(403);
-            res.end('Restricted access');
+            /*res.writeHead(403);
+            res.end('Restricted access');*/
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body><form><input type="text" name="comment2"/>' +
+                '<input type="submit2" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/> ' +
+                '</form><form><input type="text" name="username"/><input type="password" name="password"/>' +
+                '<input type="submit" name="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/> ' +
+                '</form><form action="/123" method="GET"><input type="email" name="email"><input type="submit" name="send"></form></body></html>');
         }
+    } else if (req.url == '/csrf_name_not_in_list') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body><form action="/abcd"><input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="not_in_list" value="' + csrftoken + '"/> ' +
+                '</form></body></html>');
+        } else {
+            /*res.writeHead(403);
+            res.end('Restricted access');*/
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body><form><input type="text" name="comment2"/>' +
+                '<input type="submit2" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/> ' +
+                '</form><form><input type="text" name="username"/><input type="password" name="password"/>' +
+                '<input type="submit" name="submit" value="submit"/><input type="hidden" name="yii_anticsrf" value="' + csrftoken + '"/> ' +
+                '</form><form action="/123" method="GET"><input type="email" name="email"><input type="submit" name="send"></form></body></html>');
+        }
+    } else if (req.url == '/no_hidden') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form><input type="text" name="username2"/><input type="password" name="password2"/>' +
+            '<input type="submit" value="submit"/></form>');
+        }
+        else{
+            res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
+        }
+    } else if (req.url == '/not_available_not_connected') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
+        } else {
+            setTimeout(() => {
+                res.writeHead(404);
+                res.end('');
+            }, 4000);
+        }
+    } else if (req.url == '/same_forms') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
+        } else {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
+        }
+    } 
+    else if (req.url == '/no_form_when_connected') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('');
+        } else {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
+        }
+    }
+    else if (req.url == '/not_available') {
+        setTimeout(() => {
+            res.writeHead(403);
+            res.end('');
+        }, 4000);
     } else {
         res.writeHead(404);
         res.end('wrong request');
@@ -93,10 +169,6 @@ var server = http.createServer(function (req, res) {
     } else if (req.url == '/no_connection_form') {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form></form>');
-    } else if (req.url == '/no_hidden') {
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
-            '<input type="submit" value="submit"/></form>');
     } else if (req.url == '/no_csrf_token') {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form><input type="text" name="username"/><input type="password" name="password"/>' +
@@ -145,7 +217,7 @@ describe('checks/server/check_csrf.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it('detects missing CSRF token', (done) => {
+    it('detects form available only when connected', (done) => {
         var ct = new cancellationToken();
         var check_csrf = require('../../../src/checks/server/check_csrf.js');
 
@@ -167,63 +239,241 @@ describe('checks/server/check_csrf.js', function () {
                 // we're logged in, preserve cookies for all subsequent requests
                 request.sessionJar = data.cookieJar;
 
-                var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
-                let p1 = new Promise(function (resolve, reject) {
-                    check.check(ct)
-                        .then((issues) => {
-                            if (issues) {
-                                reject(new Error('Unexpected issue happened'));
-                            }
-                            else {
-                                resolve();
-                            }
-                        })
-                        .catch((e) => {
-                            reject(e);
-                        });
-                });
-
-
-                Promise.all([p1])
-                    .then(() => {
-                        done();
+                //  let p1 = new Promise(function (resolve, reject) {
+                let check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
                     })
                     .catch((e) => {
                         done(e);
                     });
             }
         });
+    });
 
-        /*
-        check_csrf.authData = { url: 'https://www.reddit.com/', user: 'SitecheckUt', password: 'sitechec', loggedInCheckurl: 'https://www.reddit.com/', loggedInCheckRegex: /reddit.com\/\logout/ };
-        var check = new check_csrf(new Target('http://localhost:8000/csrf_ok', CONSTANTS.TARGETTYPE.SERVER));
-        let p1 = new Promise(function (resolve, reject) {
-            check.check(ct)
-                .then((issues) => {
-                    if (issues) {
-                        reject(new Error('Unexpected issue happened'));
-                    }
-                    else {
-                        resolve();
-                    }
-                })
-                .catch((e) => {
-                    reject(e);
-                });
+    it('detects missing hidden field', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                //  let p1 = new Promise(function (resolve, reject) {
+                let check = new check_csrf(new Target('http://localhost:8000/no_hidden', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (!issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
+                    })
+                    .catch((e) => {
+                        done(e);
+                    });
+            }
         });
+    });
 
-        Promise.all([p1])
-            .then(() => {
-                console.log(123);
-                done();
+    it('show error', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        let check = new check_csrf(new Target('http://localhost:8000/not_available', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(ct)
+            .then((issues) => {
+                if (!issues) {
+                    console.log(123);
+                    done(new Error('Unexpected issue happened'));
+                }
+                else {
+                    console.log(234);
+                    done();
+                }
             })
             .catch((e) => {
-                console.log(456);
-                done(e);
+                done();
             });
-        */
     });
-    
+
+    it('show error when not connected', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let check = new check_csrf(new Target('http://localhost:8000/not_available_not_connected', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (!issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
+                    })
+                    .catch((e) => {
+                        done();
+                    });
+            }
+        });
+    });
+
+    it('same forms', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let check = new check_csrf(new Target('http://localhost:8000/same_forms', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
+                    })
+                    .catch((e) => {
+                        done();
+                    });
+            }
+        });
+    });
+
+    it('CSRF token name not present in list', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let check = new check_csrf(new Target('http://localhost:8000/csrf_name_not_in_list', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (!issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
+                    })
+                    .catch((e) => {
+                        done();
+                    });
+            }
+        });
+    });
+
+    it('No form when connected', (done) => {
+        var ct = new cancellationToken();
+        var check_csrf = require('../../../src/checks/server/check_csrf.js');
+
+        var loginData = {
+            url: 'http://localhost:8000/login',
+            user: ut_user,
+            password: ut_password,
+            loggedInCheckurl: 'http://localhost:8000/content',
+            loggedInCheckRegex: /content/
+        };
+
+        autoLogin(loginData.url, loginData.user, loginData.password, loginData.loggedInCheckurl, loginData.loggedInCheckRegex, (err, data) => {
+            if (err) {
+                done(new Error(loginData.name + " login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let check = new check_csrf(new Target('http://localhost:8000/no_form_when_connected', CONSTANTS.TARGETTYPE.SERVER));
+                check.check(ct)
+                    .then((issues) => {
+                        if (issues) {
+                            done(new Error('Unexpected issue happened'));
+                        }
+                        else {
+                            done();
+                        }
+                    })
+                    .catch((e) => {
+                        done();
+                    });
+            }
+        });
+    });
+
     after(() => {
         server.close();
     });

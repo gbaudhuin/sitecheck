@@ -72,7 +72,7 @@ describe('checks/server/check_error_pages.js', function () {
         server.listen(8000);
     });
 
-    it.only('detects error pages', function (done) {
+    it('detects error pages', function (done) {
         this.timeout(2000);
         var check_error_pages = require('../../../src/checks/server/check_error_pages.js');
 

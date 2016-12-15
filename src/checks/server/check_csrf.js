@@ -18,9 +18,12 @@
 
 var Check = require('../../check');
 var request = require('request');
-var cheerio = require('cheerio');
 const CONSTANTS = require("../../constants.js");
+let inputVector = require('../../inputVector.js');
 //var autoLogin = require("../../autoLogin.js");
+
+let ivs, ivsNotConnected;
+
 
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
@@ -54,7 +57,7 @@ module.exports = class CheckCSRF extends Check {
             'form_key',                   // Magento 1.9
             'authenticity_token'          // Twitter
         ];
-       // this._entropy = 0;
+        // this._entropy = 0;
         this._conf = {
             "url": "https://twitter.com",
             "connectionUrl": "https://twitter.com/sessions",
@@ -83,153 +86,107 @@ module.exports = class CheckCSRF extends Check {
         var self = this;
         self._cancellationToken = cancellationToken;
         var timeout = 3000;
-
+        let arrayOfConnectedOnlyForms = [];
         return new Promise((resolve, reject) => {
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: request.sessionJar }, (err, res, body) => {
                 if (err) {
+                    self._raiseIssue("warning_csrf.xml", null, "Url '" + self.target.uri + "' is not reachable", true);
                     reject(err);
                     return;
                 }
                 // list forms
-                // if forms : 
-                request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: null }, (err, res, body) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    // list forms
-                });
-
-                /*if (body.indexOf('<form') !== -1) {
-                    let $ = cheerio.load(body);
-                    $('form').each(function (f, elem) {
-                        if ($(elem).attr('action') == self.target.url) {
-                            self._conf.form.authenticity_token = ($(elem).find('input[name=' + self._conf.connectionToken + ']').attr('value'));
-                        }
-                        resolve();
-                    });
-                }*/
-            });
-            /*.then(self.checkIfPageHasAForm.bind(self))
-            .then(self.checkIfFormIsAConnectionForm.bind(self))
-            .then(self.checkIfFormHasAnHiddenInput.bind(self))
-            .then(self.checkIfFormContainsToken.bind(self))
-            .then(self.checkIfTokenChanges.bind(self))
-            //.then(self.checkEntropy.bind(self))
-            .then(self.testConnection.bind(self));*/
-        })
-            .then(self.login.bind(self));
-    }
-
-    login() {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            request.post({
-                headers: {
-                    'content-type': 'application/x-www-form-urlencoded',
-                    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'accept-encoding': 'gzip, deflate, br',
-                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                },
-                url: "https://twitter.com/sessions",
-                form: self._conf.form,
-                timeout: 1000,
-                cancellationToken: self._cancellationToken,
-                jar: true, gzip: true
-            }, function (err, res, body) {
-                if (!err && res.statusCode == 302) {
-                    request.get({
-                        headers: {
-                            'content-type': 'application/x-www-form-urlencoded',
-                            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            'accept-encoding': 'gzip, deflate, br',
-                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                        },
-                        url: "https://twitter.com/",
-                        timeout: 1000,
-                        cancellationToken: self._cancellationToken,
-                        jar: true,
-                        gzip: true
-                    }, function (err, res, body2) {
-                        if (!err && res.statusCode == 200) {
-                            var re = body2.match(/class=\"DashboardProfileCard/);
-                            if (re) {
-                                console.log("connecté !");
-                                resolve();
+                else {
+                    ivs = inputVector.parseHtml(body);
+                    if (ivs.length > 0) {
+                        //console.log(ivs);
+                        // if forms : 
+                        request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: null }, (err, res, body) => {
+                            if (err) {
+                                self._raiseIssue("warning_csrf.xml", null, "Url '" + self.target.uri + "' is not reachable", true);
+                                reject(err);
+                                return;
                             }
-                        }
-                    });
+                            ivsNotConnected = inputVector.parseHtml(body);
+                            for (let formConnected of ivs) {
+                                let found = false;
+                                for (let formNonConnected of ivsNotConnected) {
+                                    if (formConnected.isSameVector(formNonConnected)) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!found) {
+                                    arrayOfConnectedOnlyForms.push(formConnected);
+                                }
+                            }
+                            for (let form of arrayOfConnectedOnlyForms) {
+                                let hidden = self.getHidden(form);
+                                if (hidden) {
+                                    if (!self.isInArray(hidden.name)) {
+                                        self._raiseIssue("warning_csrf.xml", null, "Token not found or not present in our database at Url '" + res.request.uri.href + "'", true);
+                                        //TODO
+                                        //self.checkIfTokenChanges(token.value)
+                                        //.then(self.checkEntropy());
+                                    }
+                                }
+                                else {
+                                    self._raiseIssue("warning_csrf.xml", null, "No hidden input found at Url '" + res.request.uri.href + "'", true);
+                                }
+                            }
+
+                            // list forms
+                            // pour les forms qui existent uniquement en connecté
+                            // check si existe token csrf
+                            // check si token changes
+                            // check entropy
+                            resolve();
+                        });
+                    }
+                    else {
+                        resolve();
+                    }
                 }
             });
         });
+
+        /*.then(self.checkIfTokenChanges.bind(self))
+        .then(self.checkEntropy.bind(self))*/
     }
 
-    checkIfPageHasAForm() {
-        let self = this;
-        if (self._body.indexOf('<form') !== -1) {
-            let $ = cheerio.load(self._body);
-            $('form').each(function () {
-                if ($(this).find('input[type=submit],button[type=submit],button[type=button]').length > 0) {
-                    self._form = $(this).html();
-                    self._formAction = $(this).attr('action');
-                }
-            });
-        }
-    }
-
-    checkIfFormHasAnHiddenInput() {
-        let self = this;
-        if (self._form !== '') {
-            let $ = cheerio.load(self._form);
-            let input = $('input[type="hidden"]');
-            if (input.length === 0) {
-                self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + self.target.uri + "' does not have any hidden input", true);
+    getHidden(vector) {
+        vector = JSON.parse(JSON.stringify(vector));
+        for (let field of vector.fields) {
+            if (field.type == 'hidden') {
+                return field;
             }
         }
+        return false;
     }
 
-    checkIfFormContainsToken() {
+    isInArray(tokenName) {
+        return (this._COMMON_CSRF_NAMES.indexOf(tokenName) != -1);
+    }
+
+    /*checkIfTokenChanges(token) {
         let self = this;
-        if (self._form !== '') {
-            let $ = cheerio.load(self._form);
-            let found = false;
-            $('input[type="hidden"]').each(function () {
-                let input = $(this);
-                self._COMMON_CSRF_NAMES.forEach((name) => {
-                    if (input.attr('name') == name) {
-                        self._token = input.prop('value');
-                        self._tokenName = name;
-                        found = true;
-                    }
-                });
-                if (found === false) {
-                    self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + self.target.uri + "' does not have a CSRF Token", true);
-                }
-            });
-        }
-    }
+        request.get({ url: self.target.uri, timeout: 2000, cancellationToken: self._cancellationToken }, (err, res, body) => {
+            self._body2 = body;
+            let $ = cheerio.load(body);
+            let form = $('form');
+            self._form2 = form.html();
+            let input = $('input[type="hidden"][name=' + self._tokenName + ']');
+            if (self._token != input.attr('value') && input.attr('value') !== undefined) {
+                self._token2 = input.attr('value');
+            }
+            else {
+                self._raiseIssue("CSRF_Token_Warning.xml", null, "Token doesn\'t changes for each session at Url '" + self.target.uri + "' this may be a security issue", true);
+            }
 
-    checkIfTokenChanges() {
-        let self = this;
-        if (self._token !== '') {
-            request.get({ url: self.target.uri, timeout: 2000, cancellationToken: self._cancellationToken }, (err, res, body) => {
-                self._body2 = body;
-                let $ = cheerio.load(body);
-                let form = $('form');
-                self._form2 = form.html();
-                let input = $('input[type="hidden"][name=' + self._tokenName + ']');
-                if (self._token != input.attr('value') && input.attr('value') !== undefined) {
-                    self._token2 = input.attr('value');
-                }
-                else {
-                    self._raiseIssue("CSRF_Token_Warning.xml", null, "Token doesn\'t changes for each session at Url '" + self.target.uri + "' this may be a security issue", true);
-                }
+        });
+    }*/
 
-            });
-        }
-    }
-
-    checkEntropy() {
+    /*checkEntropy() {
         let self = this;
         if (self._form !== '') {
             let entropyFirstToken = 0;
@@ -258,71 +215,6 @@ module.exports = class CheckCSRF extends Check {
                 self._raiseIssue("CSRF_Token_Warning.xml", null, "CSRF tokens aren\'t secured consider changing them to secured one at Url '" + self.target.uri + "'", true);
             }
         }
-    }
+    }*/
 
-    testConnection() {
-        let self = this;
-        request.get({ url: self._conf.url, timeout: 1000, cancellationToken: self._cancellationToken, jar: true }, function (err, res, body) {
-            if (!err && res.statusCode == 200) {
-                var r = body.match(/value=\"([0123456789abcdef]+)\" name=\"authenticity_token\"/i);
-                var authenticity_token = r[1];
-                request.post({
-                    headers: {
-                        'content-type': 'application/x-www-form-urlencoded',
-                        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'accept-encoding': 'gzip, deflate, br',
-                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                    },
-                    url: "https://twitter.com/sessions",
-                    form: {
-                        'session[username_or_email]': 'v.crasnier@peoleo.fr',
-                        'session[password]': 'azerty123',
-                        'remember_me': '1',
-                        'return_to_ssl': 'true',
-                        'scribe_log': '',
-                        'redirect_after_login': '/',
-                        'authenticity_token': authenticity_token
-                    },
-                    timeout: 1000,
-                    cancellationToken: self._cancellationToken,
-                    jar: true, gzip: true
-                }, function (err, res, body) {
-                    if (!err && res.statusCode == 302) {
-                        request.get({
-                            headers: {
-                                'content-type': 'application/x-www-form-urlencoded',
-                                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                                'accept-encoding': 'gzip, deflate, br',
-                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                            },
-                            url: "https://twitter.com/",
-                            timeout: 1000,
-                            cancellationToken: self._cancellationToken,
-                            jar: true,
-                            gzip: true
-                        }, function (err, res, body2) {
-                            if (!err && res.statusCode == 200) {
-                                var re = body2.match(/class=\"DashboardProfileCard/);
-                                if (re) {
-                                    console.log("connecté !");
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    checkIfFormIsAConnectionForm() {
-        let self = this;
-        if (self._form !== '') {
-            let $ = cheerio.load(this._form);
-            if (($('input[type=text],input[type=email]').length > 0) && ($('input[type=password]').length > 0) && ($('input[type=submit],button[type=submit],button[type=button]').length > 0)) {
-                self._usernameInput = $('input[type=text],input[type=email]').attr('name');
-                self._passwordInput = $('input[type=password]').attr('name');
-                self._submitButton = $('input[type=submit],button[type=submit]').attr('value');
-            }
-        }
-    }
 };

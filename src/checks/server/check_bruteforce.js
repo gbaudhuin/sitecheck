@@ -16,10 +16,12 @@
  */
 "use strict";
 
-var Check = require('../../check');
-var request = require('request');
+let Check = require('../../check');
+let request = require('request');
 const CONSTANTS = require("../../constants.js");
-let cheerio = require('cheerio');
+let inputVector = require('../../inputVector.js');
+var autoLogin = require('../../../src/autoLogin.js');
+let ivs;
 
 module.exports = class CheckHeaders extends Check {
     constructor(target) {
@@ -52,28 +54,15 @@ module.exports = class CheckHeaders extends Check {
 
         ];
         this._entropy = 0;
-        this._conf = {
-            "url": "http://localhost:8000/get_form",
-            "connectionUrl": "http://localhost:8000/post_form",
-            "IDS": {
-                "username": "Bob",
-                "password": "azerty123"
-            },
-            "loginInputs": {
-                "usernameInput": "",
-                "passwordInput": ""
-            },
-            "connectionToken": "authenticity_token",
-            "form": {
-                'username': "Bob",
-                'password': "",
-                'remember_me': '1',
-                'return_to_ssl': 'true',
-                'scribe_log': '',
-                'redirect_after_login': '/',
-                'authenticity_token': ""
-            }
-        };
+        this._checkUrl = '';
+        this._regexFound = '';
+        this._usernameList = [
+            /*"root",
+            "admin",
+            "john",*/
+            "bob"
+        ];
+
         this._passwordList = [
             "dragon",
             "trustno1",
@@ -359,117 +348,34 @@ module.exports = class CheckHeaders extends Check {
                     reject(err);
                     return;
                 }
-                if (body.indexOf('<form') !== -1) {
-                    let $ = cheerio.load(body);
-                    self._body = body;
-                    $('form').each(function (f, elem) {
-                        if ($(elem).attr('action') == self._conf.connectionUrl) {
-                            self._conf.form.authenticity_token = ($(elem).find('input[name=' + self._conf.connectionToken + ']').attr('value'));
-                            resolve();
-                        }
-                    });
+                else {
+                    ivs = inputVector.parseHtml(body);
                 }
+                resolve();
             });
         })
-            //.then(self.login.bind(self));
-            //.then(self.basicAuth.bind(self))
-            .then(self.checkIfPageHasAForm.bind(self))
-            .then(self.checkIfFormHasAnHiddenInput.bind(self))
-            .then(self.checkIfFormContainsToken.bind(self))
-            .then(self.testConnection.bind(self));
+            .then(self.testConnection.bind(self))
+            .then(self.basicAuth.bind(self));
     }
 
     basicAuth() {
         let self = this;
-        return new Promise(function (resolve, reject) {
-            self._passwordList.forEach((name) => {
-                request.post({
-                    headers: {
-                        "Authorization": new Buffer("Basic : Bob:" + name).toString('base64')
-                    },
-                    url: self.target.uri,
-                    timeout: 15000,
-                    cancellationToken: self._cancellationToken
-                }, function (err, res, body) {
-                    if (res.statusCode === 200) {
-                        self._raiseIssue("Basic_Auth_Warning.xml", null, "Authentication is easily bruteforce at url '" + self.target.uri + "' be careful, consider change authenticating method", true);
-                        resolve();
-                    }
-                });
-            });
-        });
-    }
-
-    /*login() {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            self._passwordList.forEach((name) => {
-                try {
+        if (ivs.length === 0) {
+            return new Promise(function (resolve, reject) {
+                for (let password of self._passwordList) {
                     request.post({
-                        url: self._action,
-                        form: {
-                            "username": "Bob",
-                            "password": name
+                        headers: {
+                            "Authorization": new Buffer("Basic : Bob:" + password).toString('base64')
                         },
+                        url: self.target.uri,
                         timeout: 15000,
-                        cancellationToken: self._cancellationToken,
-                        jar: true, gzip: true
-                    }, function (err, res, body) {
-                        if (!err) {
-                            if (res.statusCode !== 403) {
-                                resolve();
-                            }
+                        cancellationToken: self._cancellationToken
+                    }, (err, res, body) => {
+                        if (res.statusCode === 200) {
+                            self._raiseIssue("Basic_Auth_Warning.xml", null, "Authentication is easily bruteforce at url '" + self.target.uri + "' be careful, consider change authenticating method", true);
+                            resolve();
                         }
                     });
-                }
-                catch (e) {
-                    reject();
-                    throw new Error();
-                }
-            });
-        });
-    }*/
-
-    checkIfPageHasAForm() {
-        let self = this;
-        if (self._body.indexOf('<form') !== -1) {
-            let $ = cheerio.load(self._body);
-            $('form').each(function () {
-                if ($(this).find('input[type=submit],button[type=submit],button[type=button]').length > 0) {
-                    self._form = $(this).html();
-                    self._formAction = $(this).attr('action');
-                }
-            });
-        }
-    }
-
-    checkIfFormHasAnHiddenInput() {
-        let self = this;
-        if (self._form !== '') {
-            let $ = cheerio.load(self._form);
-            let input = $('input[type="hidden"]');
-            if (input.length === 0) {
-                self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + self.target.uri + "' does not have any hidden input", true);
-            }
-        }
-    }
-
-    checkIfFormContainsToken() {
-        let self = this;
-        if (self._form !== '') {
-            let $ = cheerio.load(self._form);
-            let found = false;
-            $('input[type="hidden"]').each(function () {
-                let input = $(this);
-                self._COMMON_CSRF_NAMES.forEach((name) => {
-                    if (input.attr('name') == name) {
-                        self._token = input.prop('value');
-                        self._tokenName = name;
-                        found = true;
-                    }
-                });
-                if (found === false) {
-                    self._raiseIssue("CSRF_Token_Warning.xml", null, "The connection/inscription form at the Url '" + self.target.uri + "' does not have a CSRF Token", true);
                 }
             });
         }
@@ -477,33 +383,25 @@ module.exports = class CheckHeaders extends Check {
 
     testConnection() {
         let self = this;
-        return new Promise(function (resolve, reject) {
-            self._passwordList.forEach((name) => {
-                try {
-                self._conf.form.password = name;
-                request.post({
-                    headers: {
-                        'content-type': 'application/x-www-form-urlencoded',
-                        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'accept-encoding': 'gzip, deflate, br',
-                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                    },
-                    url: self._conf.connectionUrl,
-                    form: self._conf.form,
-                    timeout: 10000,
-                    cancellationToken: self._cancellationToken,
-                    jar: true, gzip: true
-                }, function (err, res, body) {
-                    if (res.statusCode === 200) {
-                        resolve();
+        if (ivs.length > 0) {
+            return new Promise(function (resolve, reject) {
+                for (let username of self._usernameList) {
+                    for (let password of self._passwordList) {
+                        autoLogin(self.target.uri, username, password, self._checkUrl, self._regexFound, (err, data) => {
+                            if (err) {
+                                //console.log(err);
+                                //console.log(username + ' + ' + password + ' failed');
+                            } else {
+                                if (!data) console.log('fail');
+                                if (!data.cookieJar) console.log('fail2');
+
+                                // we're logged in, preserve cookies for all subsequent requests
+                                console.log(123);
+                            }
+                        });
                     }
-                });
-                }
-                catch(e){
-                    reject();
-                    throw new Error();
                 }
             });
-        });
+        }
     }
 };

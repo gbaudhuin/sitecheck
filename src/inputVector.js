@@ -43,6 +43,19 @@ class InputVector {
         if (this.url && this.fields.password) return true;
         return false;
     }
+
+    isSameVector(secondVector) {
+        let firstArray = [], secondArray = [];
+        if (secondVector instanceof InputVector) {
+                for (let field of this.fields) {
+                    firstArray.push({ 'name': field.name, 'type': field.type });
+                }
+                for (let field of secondVector.fields) {
+                    secondArray.push({ 'name': field.name, 'type': field.type });
+            }
+        }
+        return JSON.stringify(firstArray) === JSON.stringify(secondArray);
+    }
 }
 
 /**
@@ -63,7 +76,7 @@ function parseHtml(html) {
         f.action = $form.attr('action');
         f.method = $form.attr('method');
         if (f.method) f.method = f.method.toUpperCase();
-        
+
         $form.find('input').each((i, elem) => {
             let o = {};
             if ($(elem).attr('name')) o.name = $(elem).attr('name');

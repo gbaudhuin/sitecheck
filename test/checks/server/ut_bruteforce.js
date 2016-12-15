@@ -21,6 +21,9 @@ var Target = require('../../../src/target.js');
 var http = require('http');
 //var expect = require('chai').expect;
 var cancellationToken = require('../../../src/cancellationToken.js');
+var qs = require('querystring');
+var ut_user = "bob";
+var ut_password = "88888888";
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/basic_auth') {
@@ -33,49 +36,75 @@ var server = http.createServer(function (req, res) {
             res.end('Access granted');
         }
     }
-    else if (req.url == '/get_form') {
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end('<form action="http://localhost:8000/post_form"><input type="text" name="username"/><input type="password" name="password"/>' +
-            '<input type="submit" value="submit"/><input type="hidden" name="authenticity_token" value="' + Token() + '"/></form>');
+    /*else if (req.url == '/login') {
+        var cookiejar = new tough.CookieJar();
+        var c = new tough.Cookie({ key: 'sessid', value: sessid, maxAge: "86400" });
+        cookiejar.setCookieSync(c, 'http://localhost:8000' + req.url);
+        var cookieStr = cookiejar.getCookiesSync('http://localhost:8000' + req.url);
+        res.writeHead(200, { "Content-Type": "text/html", 'set-cookie': cookieStr });
+
+        res.end('<form action="/session" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/><input type="hidden" name="tok" value="' + Token() + '"/></form>');
+    } else if (req.url == '/session') {
+        let cookies = parseCookies(req);
+        if (cookies.sessid && cookies.sessid == sessid) {
+            var body = '';
+
+            req.on('data', function (data) {
+                body += data;
+
+                // Prevent malicious flooding
+                if (body.length > 1e6) req.connection.destroy();
+            });
+
+            req.on('end', function () {
+                var post = qs.parse(body);
+                if (post.password == ut_password && post.username == ut_user) {
+                    res.writeHead(302, { 'Location': '/content' });
+                    res.end('bad request : wrong sessid');
+                } else {
+                    res.writeHead(403);
+                    res.end('bad request : wrong sessid');
+                }
+            });
+        } else {
+            res.writeHead(403);
+            res.end('bad request : wrong sessid');
+        }
+    } else if (req.url == '/content') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<html><head><body>content<body></head></html>');
+    }*/ else if (req.url == '/get_form') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<form action="http://localhost:8000/post_form" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<input type="submit" value="submit"/></form>');
     }
     else if (req.url == '/post_form') {
-        var body = [];
-        req.on('error', function (err) {
-            console.error(err);
-        }).on('data', function (chunk) {
-            body.push(chunk);
-        }).on('end', function () {
-            body = Buffer.concat(body).toString();
-            if (body.indexOf("username=Bob&password=99999999") !== -1) {
-                res.writeHead(200, { "Content-Type": "text/html" });
-                res.end('done');
-            }
-            else {
-                res.writeHead(401, { "Content-Type": "text/html" });
-                res.end('Access denied');
+        let body = '';
+        req.on('data', function (data) {
+            body += data;
+            // Prevent malicious flooding
+            if (body.length > 1e6) req.connection.destroy();
+        });
+        req.on('end', function () {
+            var post = qs.parse(body);
+            if (post.password == ut_password && post.username == ut_user) {
+                res.writeHead(302, { 'Location': '/content' });
+                res.end('bad request : wrong sessid');
+            } else {
+                res.writeHead(403);
+                res.end('bad request : wrong sessid');
             }
         });
     }
 });
-
-function Token() {
-    var rand = function () {
-        return Math.random().toString(36).substr(2); // remove `0.`
-    };
-
-    var token = function () {
-        return rand() + rand(); // to make it longer
-    };
-
-    return token();
-}
 
 describe('checks/server/check_bruteforce.js', function () {
     this.timeout(50000);
     before(() => {
         server.listen(8000);
     });
-    it.skip('detects if bruteforce by basic auth works', function (done) {
+    it('detects if bruteforce by basic auth works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
@@ -102,7 +131,7 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    it('detects if bruteforce by form works', function (done) {
+    it.only('detects if bruteforce by form works', function (done) {
         this.timeout(50000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
@@ -129,7 +158,7 @@ describe('checks/server/check_bruteforce.js', function () {
             });
     });
 
-    it.skip('is cancellable', function (done) {
+    it('is cancellable', function (done) {
         this.timeout(2000);
         var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
