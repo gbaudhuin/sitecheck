@@ -38,27 +38,32 @@
     <Compile Include="src\checks\server\check_bruteforce.js" />
     <Compile Include="src\checks\server\check_code_disclosure.js" />
     <Compile Include="src\checks\server\check_cross_domain.js" />
-    <Compile Include="src\checks\server\check_csrf.js" />
+    <Compile Include="src\checks\page\check_csrf.js" />
     <Compile Include="src\checks\server\check_error_pages.js" />
+    <Compile Include="src\helpers.js" />
     <Compile Include="src\inputVector.js" />
     <Compile Include="src\issue.js" />
+    <Compile Include="src\params.js" />
     <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
     <Compile Include="src\checks\server\check_headers.js" />
     <Compile Include="src\target.js" />
     <Compile Include="src\constants.js" />
-    <Compile Include="test\checks\server\ut_bruteforce.js" />
+    <Compile Include="test\checks\server\ut_bruteforce.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\checks\server\ut_code_disclosure.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\checks\server\ut_cross_domain.js" />
-    <Compile Include="test\checks\server\ut_csrf.js">
+    <Compile Include="test\checks\page\ut_csrf.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\checks\server\ut_error_pages.js" />
     <Compile Include="test\checks\server\ut_headers.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
+    <Compile Include="test\helpers\sessionHelper.js" />
     <Compile Include="test\ut_app.js">
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
@@ -77,12 +82,15 @@
     <Compile Include="test\ut_inputVector.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
+    <Compile Include="test\ut_params.js">
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
     <Compile Include="test\ut_requestwrapper.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_target.js" />
     <Content Include="test\ut_data\.sitecheckrc1" />
-    <Content Include="test\ut_data\ut_autoLogin\login.html" />
+    <Content Include="test\ut_data\ut_autoLogin\formlogin.html" />
     <Content Include="test\ut_data\ut_inputVector\twitter20161209.html" />
     <None Include=".licenseheader" />
     <Content Include=".coveralls.yml" />
@@ -96,10 +104,13 @@
     <Folder Include="config\" />
     <Folder Include="src\" />
     <Folder Include="src\checks\" />
+    <Folder Include="src\checks\page\" />
     <Folder Include="src\checks\server\" />
     <Folder Include="test\" />
     <Folder Include="test\checks\" />
+    <Folder Include="test\checks\page\" />
     <Folder Include="test\checks\server\" />
+    <Folder Include="test\helpers\" />
     <Folder Include="test\ut_data\" />
     <Folder Include="test\ut_data\ut_autoLogin\" />
     <Folder Include="test\ut_data\ut_inputVector\" />

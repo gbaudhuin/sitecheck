@@ -17,6 +17,7 @@
 "use strict";
 
 var cheerio = require('cheerio');
+var winston = require("winston");
 
 /**
  * An input vector : a set of data that can interract with the application via an url
@@ -63,6 +64,11 @@ class InputVector {
  * @param {string} html - Html text to parse
  */
 function parseHtml(html) {
+    if (!html) {
+        winston.warn("InputVector.parseHtml(html) : no html.");
+        return null; 
+    }
+
     var ret = []; // array of InputVectors
 
     var $ = cheerio.load(html);

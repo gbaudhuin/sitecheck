@@ -55,7 +55,7 @@ function request(uri, options, callback) {
     var cb = params.callback;
     params.callback = function (err, res, body) {
         if (!err) {
-            winston.log('warn', res.statusCode + ' : ' + res.request.uri.href);
+            winston.log('debug', res.statusCode + ' : ' + res.request.uri.href);
         } else {
             if (err.code) {
                 winston.log('warn', err.code + ' : ' + err.message);

@@ -16,18 +16,31 @@
  */
 
 'use strict';
-const CONSTANTS = require('../../../src/constants.js');
-var Target = require('../../../src/target.js');
 var http = require('http');
-//var expect = require('chai').expect;
-var cancellationToken = require('../../../src/cancellationToken.js');
 var qs = require('querystring');
-var ut_user = "bob";
-var ut_password = "88888888";
+var tough = require('tough-cookie');
+var Promise = require('bluebird');
+var SessionHelper = require('../../helpers/sessionHelper.js');
+var Target = require('../../../src/target.js');
+var CancellationToken = require('../../../src/cancellationToken.js');
+var CheckBruteforce = require('../../../src/checks/server/check_bruteforce.js');
+var helpers = require('../../../src/helpers.js');
+const CONSTANTS = require('../../../src/constants.js');
+
+var sessionHelper = new SessionHelper();
+
+var fields = {
+    action: '/connect',
+    username: 'admin',
+    password: '1234',
+    csrf: 'authenticity_token',
+    csrf_value: helpers.token()
+};
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/basic_auth') {
-        if (req.headers.authorization !== "QmFzaWMgOiBCb2I6OTk5OTk=") {
+        var authString = "Basic : " + new Buffer(fields.username + ":" + fields.password).toString('base64');
+        if (req.headers.authorization !== authString) {
             res.statusCode = 401;
             res.setHeader('WWW-Authenticate', 'Basic realm="example"');
             res.end('Access denied');
@@ -36,66 +49,63 @@ var server = http.createServer(function (req, res) {
             res.end('Access granted');
         }
     }
-    /*else if (req.url == '/login') {
-        var cookiejar = new tough.CookieJar();
-        var c = new tough.Cookie({ key: 'sessid', value: sessid, maxAge: "86400" });
-        cookiejar.setCookieSync(c, 'http://localhost:8000' + req.url);
-        var cookieStr = cookiejar.getCookiesSync('http://localhost:8000' + req.url);
-        res.writeHead(200, { "Content-Type": "text/html", 'set-cookie': cookieStr });
 
-        res.end('<form action="/session" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
-            '<input type="submit" value="submit"/><input type="hidden" name="tok" value="' + Token() + '"/></form>');
-    } else if (req.url == '/session') {
-        let cookies = parseCookies(req);
-        if (cookies.sessid && cookies.sessid == sessid) {
-            var body = '';
+    // a page protected by an html login form
+    else if (req.url == '/loginForm') {
+        sessionHelper.manageSession(req, res);
 
-            req.on('data', function (data) {
-                body += data;
-
-                // Prevent malicious flooding
-                if (body.length > 1e6) req.connection.destroy();
-            });
-
-            req.on('end', function () {
-                var post = qs.parse(body);
-                if (post.password == ut_password && post.username == ut_user) {
-                    res.writeHead(302, { 'Location': '/content' });
-                    res.end('bad request : wrong sessid');
-                } else {
-                    res.writeHead(403);
-                    res.end('bad request : wrong sessid');
-                }
-            });
-        } else {
-            res.writeHead(403);
-            res.end('bad request : wrong sessid');
-        }
-    } else if (req.url == '/content') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end('<html><head><body>content<body></head></html>');
-    }*/ else if (req.url == '/get_form') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end('<form action="http://localhost:8000/post_form" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+        res.writeHead(200, { "Content-Type": "text/html"});
+        res.end('<form action="http://localhost:8000' + fields.action + '" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
             '<input type="submit" value="submit"/></form>');
     }
-    else if (req.url == '/post_form') {
-        let body = '';
+
+    // action url of login form.
+    // Returns 302 if 'user', 'password', and sessid cookie match.
+    // Returns 403 else.
+    else if (req.url == '/connect') {
+        sessionHelper.manageSession(req, res);
+
+        // user must have a valid existing sessid to connect
+        if (!sessionHelper.isValidSession(req)) {
+            res.writeHead(403);
+            res.end('bad request : invalid sessid');
+            return;
+        }
+
+        var body = '';
+
         req.on('data', function (data) {
             body += data;
+
             // Prevent malicious flooding
             if (body.length > 1e6) req.connection.destroy();
         });
+
         req.on('end', function () {
             var post = qs.parse(body);
-            if (post.password == ut_password && post.username == ut_user) {
+            if (post.password == fields.password && post.username == fields.username) {
                 res.writeHead(302, { 'Location': '/content' });
-                res.end('bad request : wrong sessid');
+                sessionHelper.connectSession(req);
+                res.end();
             } else {
                 res.writeHead(403);
-                res.end('bad request : wrong sessid');
+                res.end('bad request : wrong credentials');
             }
         });
+    }
+
+    // typical content page
+    // if connected (valid sessid) : contains a log out link
+    // if not connected : does not contain any log out link
+    else if (req.url == '/content') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        if (sessionHelper.isConnected(req)) {
+            res.end('<html><head><body><a href="/logout">disconnect</a><body></head></html>');
+        } else {
+            res.end('<html><head><body>loremipsum<body></head></html>');
+        }
     }
 });
 
@@ -104,89 +114,60 @@ describe('checks/server/check_bruteforce.js', function () {
     before(() => {
         server.listen(8000);
     });
-    it('detects if bruteforce by basic auth works', function (done) {
-        this.timeout(50000);
-        var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
 
-        var ct = new cancellationToken();
+    it('basic auth works', function (done) {
+        this.timeout(2000);
 
-        var check1 = new check_bruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
+        let check1 = new CheckBruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
 
-        let p1 = new Promise(function (resolve, reject) {
-            check1.check(ct).then((issues) => {
-                if (!issues) {
-                    reject(new Error("unexpected issue(s) raised"));
-                }
-                else
-                    resolve();
-            });
-        });
-
-        Promise.all([p1])
-            .then(() => {
+        check1.check(new CancellationToken()).then(() => {
+            done(new Error("expected issue was not raised"));
+        }).catch((issues) => {
+            if (issues && issues.length > 0 &&
+                issues[0].errorContent &&
+                issues[0].errorContent.indexOf(fields.username) !== -1 &&
+                issues[0].errorContent.indexOf(fields.password) !== -1) {
                 done();
-            })
-            .catch(() => {
-                done(new Error('fail'));
-            });
+            }
+            else
+                done(new Error("expected issue was not raised"));
+        });
     });
 
-    it.only('detects if bruteforce by form works', function (done) {
-        this.timeout(50000);
-        var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
+    it('form auth works', function (done) {
+        this.timeout(10000);
 
-        var ct = new cancellationToken();
+        var ct = new CancellationToken();
 
-        var check1 = new check_bruteforce(new Target('http://localhost:8000/get_form', CONSTANTS.TARGETTYPE.SERVER));
-
-        let p1 = new Promise(function (resolve, reject) {
-            check1.check(ct).then((issues) => {
-                if (issues) {
-                    reject(new Error("unexpected issue(s) raised"));
-                }
-                else
-                    resolve();
-            });
-        });
-
-        Promise.all([p1])
-            .then(() => {
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/loginForm', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(ct).then(() => {
+            done(new Error("expected issue was not raised"));
+        }).catch((issues) => {
+            if (issues && issues.length > 0 &&
+                issues[0].errorContent &&
+                issues[0].errorContent.indexOf(fields.username) !== -1 &&
+                issues[0].errorContent.indexOf(fields.password) !== -1) {
                 done();
-            })
-            .catch(() => {
-                done(new Error('fail'));
-            });
+            }
+            else
+                done(new Error("expected issue was not raised"));
+        });
     });
 
     it('is cancellable', function (done) {
         this.timeout(2000);
-        var check_bruteforce = require('../../../src/checks/server/check_bruteforce.js');
+        var ct = new CancellationToken();
 
-        var ct = new cancellationToken();
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/get_form', CONSTANTS.TARGETTYPE.SERVER));
 
-        var check1 = new check_bruteforce(new Target('http://localhost:8000/get_form', CONSTANTS.TARGETTYPE.SERVER));
-
-        let p1 = new Promise(function (resolve, reject) {
-            check1.check(ct).then((issues) => {
-                if (issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            })
-                .catch((e) => {
-                    if (e.cancelled) resolve();
-                });
+        check1.check(ct).then((issues) => {
+            done(new Error('fail'));
+        }).catch((e) => {
+            if (e.cancelled) done();
         });
-
-        Promise.all([p1])
-            .then(() => {
-                done();
-            })
-            .catch(() => {
-                done(new Error('fail'));
-            });
         ct.cancel();
     });
+
     after(() => {
         server.close();
     });

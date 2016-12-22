@@ -17,6 +17,7 @@
 "use strict";
 const CONSTANTS = require("./constants.js");
 var Issue = require("./issue.js");
+var Promise = require('bluebird');
 
 /**
  * Base class of checks; All checks classes must derive from this class.
@@ -37,7 +38,6 @@ class Check {
      */
     constructor(targetType, checkFamily, requiresAuthorization, canRunDuringCrawling, target) {
         this.issues = [];
-        this.target = target;
 
         // targetType
         for (let t in CONSTANTS.TARGETTYPE) {
@@ -76,6 +76,12 @@ class Check {
             throw new Error("Check : canRunDuringCrawling must be set and must be a boolean.");
         }
         this.canRunDuringCrawling = canRunDuringCrawling;
+
+        // target
+        this.target = target;
+        if (!target) {
+            throw new Error("Check : 'target' parameter not set.");
+        }
     }
 
     /**
@@ -101,13 +107,13 @@ class Check {
     }
 
     /**
-     * Return a Promise.
+     * Returns a Promise.
      * Promises should never reject or the app will shutdown. (The only case where reject is used is when a critical error occurs)
      * @param {CancellationToken} cancellationToken - The cancellation token.
      */
     check(cancellationToken) {
         if(!cancellationToken){
-            throw new Error('Cancellation token is mandatory');
+            throw new Error('Check.check() : Cancellation token is mandatory');
         }
         return new Promise((resolve, reject) => {
             cancellationToken.register(() => {
@@ -117,12 +123,12 @@ class Check {
                 reject(err);
             });
 
-            this._check(cancellationToken).then(() => {
-                if (this.issues.length > 0)
-                    resolve(this.issues);
+            this._check(cancellationToken, (error) => {
+                if (error) reject(error);
+                else if (this.issues.length > 0) {
+                    reject(this.issues);
+                }
                 else resolve();
-            }).catch((e) => {
-                reject(e);
             });
         });
     }
@@ -130,10 +136,8 @@ class Check {
     /**
      * Inner check function to override in sub classes. These functions contain the actual check logic.
      */
-    _check(cancellationToken) {
-        return new Promise(function (resolve, reject) {
-            reject(new Error("_check(cancellationToken) must be overriden"));
-        });
+    _check(cancellationToken, done) {
+        done(new Error("_check(cancellationToken) must be overriden"));
     }
 }
 

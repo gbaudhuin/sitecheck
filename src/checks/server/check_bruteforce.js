@@ -18,49 +18,21 @@
 
 let Check = require('../../check');
 let request = require('request');
+var winston = require("winston");
+var async = require("async");
 const CONSTANTS = require("../../constants.js");
 let inputVector = require('../../inputVector.js');
-var autoLogin = require('../../../src/autoLogin.js');
-let ivs;
+var AutoLogin = require('../../../src/autoLogin.js');
+
 
 module.exports = class CheckHeaders extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
-        this._action = "";
+        this.autoLogin = new AutoLogin();
         this._cancellationToken = "";
-        this._form = "";
-        this._body = "";
-        this._tokenName = "";
-        this._token = "";
-        this._usernameInput = "";
-        this._submitButton = "";
-        this._passwordInput = "";
-        this._connectionUrl = "";
-        this._COMMON_CSRF_NAMES = [
-            'csrf_token',
-            'CSRFName',                   // OWASP CSRF_Guard
-            'CSRFToken',                  // OWASP CSRF_Guard
-            'anticsrf',                   // AntiCsrfParam.java
-            '_RequestVerificationToken',  // AntiCsrfParam.java
-            'token',
-            'csrf',
-            'YII_CSRF_TOKEN',             // http://www.yiiframework.com//
-            'yii_anticsrf',               // http://www.yiiframework.com//
-            '[_token]',                   // Symfony 2.x
-            '_csrf_token',                // Symfony 1.4
-            'csrfmiddlewaretoken',        // Django 1.5
-            'form_key',                   // Magento 1.9
-            'authenticity_token'          // Twitter
-
-        ];
-        this._entropy = 0;
-        this._checkUrl = '';
-        this._regexFound = '';
         this._usernameList = [
-            /*"root",
-            "admin",
-            "john",*/
-            "bob"
+            "root",
+            "admin"
         ];
 
         this._passwordList = [
@@ -333,75 +305,112 @@ module.exports = class CheckHeaders extends Check {
     }
 
     /** 
-     * In this module we will try to request a protected page (Protected either by basic authentication or by a form)
-     * This test is a bruteforce (It will test many tuples of username/password), if you have a protection against that be careful that it doesn't blacklist us.
-     * Even is the bruteforce against a basic authentication isn't passing, it's not a secured authentication, consider changing it.
+     * This check tries to access a protected page by bruteforce. The page may by protected either by basic authentication or by an authentication form.
+     * A large number of username/password tuples are tried. Web server having a protection against that (WAF) may blacklist us.
     */
-
-    _check(cancellationToken) {
+    _check(cancellationToken, done) {
         var self = this;
         var timeout = 30000;
         self._cancellationToken = cancellationToken;
-        return new Promise(function (resolve, reject) {
-            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: true }, (err, res, body) => {
-                if (err && err.cancelled) {
-                    reject(err);
-                    return;
-                }
-                else {
-                    ivs = inputVector.parseHtml(body);
-                }
-                resolve();
-            });
-        })
-            .then(self.testConnection.bind(self))
-            .then(self.basicAuth.bind(self));
+        // create a virgin cookie jar
+        // we must be sure to work with an unconnected session
+        var cookieJar = request.jar();
+
+        request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: cookieJar }, (err, res, body) => {
+            if (err && err.cancelled) {
+                done(err);
+                return;
+            }
+
+            if (res.statusCode == 401) {
+                self.basicAuth(cancellationToken, done);
+            }
+            else {
+                self.formAuth(body, cookieJar, cancellationToken, done);
+            }
+        });
     }
 
-    basicAuth() {
-        let self = this;
-        if (ivs.length === 0) {
-            return new Promise(function (resolve, reject) {
-                for (let password of self._passwordList) {
-                    request.post({
-                        headers: {
-                            "Authorization": new Buffer("Basic : Bob:" + password).toString('base64')
-                        },
-                        url: self.target.uri,
-                        timeout: 15000,
-                        cancellationToken: self._cancellationToken
-                    }, (err, res, body) => {
-                        if (res.statusCode === 200) {
-                            self._raiseIssue("Basic_Auth_Warning.xml", null, "Authentication is easily bruteforce at url '" + self.target.uri + "' be careful, consider change authenticating method", true);
-                            resolve();
-                        }
-                    });
-                }
-            });
-        }
-    }
-
-    testConnection() {
-        let self = this;
-        if (ivs.length > 0) {
-            return new Promise(function (resolve, reject) {
-                for (let username of self._usernameList) {
-                    for (let password of self._passwordList) {
-                        autoLogin(self.target.uri, username, password, self._checkUrl, self._regexFound, (err, data) => {
-                            if (err) {
-                                //console.log(err);
-                                //console.log(username + ' + ' + password + ' failed');
-                            } else {
-                                if (!data) console.log('fail');
-                                if (!data.cookieJar) console.log('fail2');
-
-                                // we're logged in, preserve cookies for all subsequent requests
-                                console.log(123);
-                            }
-                        });
+    /**
+     * Basic http authentication brute force access
+     * @param cancellationToken
+     */
+    basicAuth(cancellationToken, callback) {
+        var self = this;
+        var found_user = null;
+        var found_password = null;
+        async.detectSeries(self._passwordList, function (password, callback1) {
+            async.detectSeries(self._usernameList, function (user, callback2) {
+                request.post({
+                    headers: {
+                        "Authorization": "Basic : " + new Buffer(user + ":" + password).toString('base64')
+                    },
+                    url: self.target.uri,
+                    timeout: 15000,
+                    cancellationToken: cancellationToken
+                }, (err, res, body) => {
+                    if (res.statusCode === 200) {
+                        callback2(null, true);
+                    } else {
+                        callback2(null, false);
                     }
+                });
+            }, function (err, result) {
+                if (result) {
+                    found_user = result;
+                    callback1(err, true);
                 }
+                else callback1(err, false);
             });
+        }, function (err, result) {
+            if (result) {
+                found_password = result;
+                self._raiseIssue("BruteForce_BasicAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);
+            }
+
+            callback();
+        });
+    }
+
+    /**
+     * Html form authentication brute force access
+     * @param body
+     * @param cookieJar
+     * @param cancellationToken
+     */
+    formAuth(body, cookieJar, cancellationToken, callback) {
+        let self = this;
+        let iv = self.autoLogin.findLoginInputVectorInContent(body);
+        if (!iv) {
+            callback();
+            return;
         }
+
+        var found_user = null;
+        var found_password = null;
+        async.detectSeries(self._passwordList, function (password, callback1) {
+            async.detectSeries(self._usernameList, function (username, callback2) {
+                self.autoLogin.logInInputVector(self.target.uri, iv, username, password, cookieJar, self._cancellationToken, (err, data) => {
+                    if (data && data.cookieJar) {
+                        callback2(null, true);
+                    } else {
+                        callback2(null, false);
+                    }
+                });
+            }, function (err, result) {
+                if (result) {
+                    found_user = result;
+                    callback1(err, true);
+                }
+                else callback1(err, false);
+            });
+        }, function (err, result) {
+            if (result) {
+                found_password = result;
+                self._raiseIssue("BruteForce_FormAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);
+            }
+
+            callback();
+        });
     }
 };

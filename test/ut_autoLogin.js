@@ -18,33 +18,86 @@
 
 var http = require('http');
 var fs = require('fs-extra');
-var autoLogin = require('../src/autoLogin.js');
 var tough = require('tough-cookie');
 var async = require('async');
+var qs = require('querystring');
+var AutoLogin = require('../src/autoLogin.js');
+var helpers = require('../src/helpers.js');
+var CancellationToken = require('../src/cancellationToken.js');
+var SessionHelper = require('./helpers/sessionHelper.js');
+
+var sessionHelper = new SessionHelper();
+var autoLogin = new AutoLogin();
+
+var fields = {
+    action: 'connect',
+    user: 'user',
+    password: 'password',
+    csrf: 'authenticity_token',
+    csrf_value: helpers.token()
+};
+
+var account = {
+    name: 'local form page',
+    url: 'http://localhost:8000/formlogin',
+    user: "SitecheckUt",
+    password: "sitechec"
+};
+
 var server = http.createServer(function (req, res) {
-    if (req.url == '/login') {
-        var contents = fs.readFileSync(__dirname + "/ut_data/ut_autoLogin/login.html", 'utf8');
-        var fields = {
-            action: 'session.html',
-            username: 'user123',
-            password: 'password',
-            csrf: 'authenticity_token',
-            csrf_value: 'zfz4f4zf94zf9zf94zf'
-        };
+    // page with a login form and a session cookie
+    if (req.url == '/formlogin') {
+        sessionHelper.manageSession(req, res);
+
+        var contents = fs.readFileSync(__dirname + "/ut_data/ut_autoLogin/formlogin.html", 'utf8');
 
         contents = contents.replace(/{{action_field}}/g, fields.action);
-        contents = contents.replace(/{{username_field}}/g, fields.username);
+        contents = contents.replace(/{{username_field}}/g, fields.user);
         contents = contents.replace(/{{password_field}}/g, fields.password);
         contents = contents.replace(/{{csrf_field}}/g, fields.csrf);
         contents = contents.replace(/{{csrf_value}}/g, fields.csrf_value);
 
-        var cookiejar = new tough.CookieJar();
-        var c = new tough.Cookie({ key: 'sess_id', value: 'BAh7CSIKZmxhc2hJQzonQWN0aW9uQ29udHJvbGxlcjo6Rmxhc2g6OkZsYXNo', maxAge: "86400" });
-        cookiejar.setCookieSync(c, 'http://localhost:8000' + req.url);
-        var cookieStr = cookiejar.getCookiesSync('http://localhost:8000' + req.url);
-        res.setHeader('set-cookie', cookieStr);
+        res.writeHead(200, { "Content-Type": "text/html" });
         res.end(contents);
-    } else {
+    }
+
+    // action url of login form.
+    // Returns 302 if 'user', 'password', and sessid cookie match.
+    // Returns 403 else.
+    else if (req.url == '/connect') {
+        sessionHelper.manageSession(req, res);
+
+        // user must have a valid existing sessid to connect
+        if (!sessionHelper.isValidSession(req)) {
+            res.writeHead(403);
+            res.end('bad request : invalid sessid');
+            return;
+        }
+
+        var body = '';
+
+        req.on('data', function (data) {
+            body += data;
+
+            // Prevent malicious flooding
+            if (body.length > 1e6) req.connection.destroy();
+        });
+
+        req.on('end', function () {
+            var post = qs.parse(body);
+            if (post.password == account.password && post.user == account.user) {
+                res.writeHead(302, { 'Location': '/content' });
+                sessionHelper.connectSession(req);
+                res.end();
+            } else {
+                res.writeHead(403);
+                res.end('bad request : wrong credentials');
+            }
+        });
+    }
+
+    // 404
+    else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('wrong request');
     }
@@ -55,20 +108,29 @@ describe('AutoLogin module', function () {
         server.listen(8000);
     });
 
-    
+    it('Log in local form page', function (done) {
+        autoLogin.login(account.url, account.user, account.password, new CancellationToken(), (err, data) => {
+            if (err || data.user !== account.user || data.password !== account.password) {
+                done(new Error(account.user + " login failed."));
+            } else {
+                done();
+            }
+        });
+    });
+
     it('is able to log into various real world websites', function (done) {
-        this.timeout(30000);
+        this.timeout(60000);
 
         // GOOGLE
         // sitecheck.ut@gmail.com
         // sitechec
         var accounts = [
-            { name: 'Reddit', url: 'https://www.reddit.com/', user: 'SitecheckUt', password: 'sitechec', loggedInCheckurl: 'https://www.reddit.com/', loggedInCheckRegex: /reddit.com\/\logout/ },
-            { name: 'WooCommerce', url: 'https://woocommerce.com/my-account/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://woocommerce.com/my-account/', loggedInCheckRegex: /header-menu-logout/ },
-            { name: 'Twitter', url: 'https://twitter.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://twitter.com/', loggedInCheckRegex: /class=\"DashboardProfileCard/i },
-            { name: 'Github', url: 'https://github.com/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec1', loggedInCheckurl: 'https://github.com', loggedInCheckRegex: /aria-label=\"Create new/ },
-            { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?title=Special:UserLogin', user: 'SitecheckUt', password: 'sitechec1', loggedInCheckurl: 'https://en.wikipedia.org/wiki/Main_Page', loggedInCheckRegex: /pt-userpage/ },
-            { name: 'LinkedIn', url: 'https://www.linkedin.com/uas/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://www.linkedin.com/', loggedInCheckRegex: /ozidentity-container/ },
+          //slow  { name: 'Reddit', url: 'https://www.reddit.com/', user: 'SitecheckUt', password: 'sitechec' },
+            { name: 'WooCommerce', url: 'https://woocommerce.com/my-account/', user: 'sitecheck.ut@gmail.com', password: 'sitechec' },
+            { name: 'Twitter', url: 'https://twitter.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec'},
+            { name: 'Github', url: 'https://github.com/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec1'},
+            { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?title=Special:UserLogin', user: 'SitecheckUt', password: 'sitechec1'},
+            { name: 'LinkedIn', url: 'https://www.linkedin.com/uas/login', user: 'sitecheck.ut@gmail.com', password: 'sitechec'},
             
             // failed ones :
             // unknown cause (bad action url ?) : { name: 'Pinterest', url: 'https://fr.pinterest.com/', user: 'sitecheck.ut@gmail.com', password: 'sitechec', loggedInCheckurl: 'https://fr.pinterest.com/', loggedInCheckRegex: /usernameLink/},
@@ -77,7 +139,7 @@ describe('AutoLogin module', function () {
         ];
 
         async.each(accounts, function (account, callback) {
-            autoLogin(account.url, account.user, account.password, account.loggedInCheckurl, account.loggedInCheckRegex, (err, data) => {
+            autoLogin.login(account.url, account.user, account.password, new CancellationToken(), (err, data) => {
                 if (err) {
                     callback(new Error(account.name + " login failed."));
                 } else {

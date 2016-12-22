@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license Apache-2.0
  * Copyright (C) 2016 The Sitecheck Project
  *
@@ -15,22 +15,33 @@
  * limitations under the License.
  */
 "use strict";
-var assert = require('assert');
-var winston = require('winston');
-var fs = require('fs-extra');
 
 /**
-* Test src/app.js
+* Generates a random alphanumerical string
 */
-describe('app.js', function () {
-    it('doesn\'t raise exceptions', function () {
-        var exceptionRaised = false;
-        try {
-            require('../src/app.js');
-        } catch (err) {
-            exceptionRaised = true;
-        }
+exports.token = function() {
+    var rand = function () {
+        return Math.random().toString(36).substr(2); // remove `0.`
+    };
 
-        assert.equal(exceptionRaised, false);
-    });
-});
+    var token = function () {
+        return rand() + rand(); // to make it longer
+    };
+
+    return token();
+};
+
+/**
+* Gets an array of cookies from a request
+*/
+exports.parseCookies = function (request) {
+    var list = {},
+        rc = request.headers.cookie;
+
+    rc && rc.split(';').forEach(function (cookie) {
+        var parts = cookie.split('=');
+        list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });// jshint ignore:line
+
+    return list;
+};
