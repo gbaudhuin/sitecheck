@@ -17,7 +17,7 @@
 "use strict";
 
 var cheerio = require('cheerio');
-var winston = require("winston");
+var winston = require('winston');
 
 /**
  * An input vector : a set of data that can interract with the application via an url
@@ -30,11 +30,14 @@ class InputVector {
      * @param {string} uri - action uri to pass the input data to.
      * @param {string} method - 'GET', 'POST', 'HEADER', 'PUT', 'DELETE', 'PATCH'. lower case chars are automatically uppercased
      * @param {Object} fields - an array fields. Fields are literals defined this way : {name:'', type:'', value:''}
+     * @param {string} enctype - Data encoding type. Default value is null and should be considered equivalent to "application/x-www-form-urlencoded". Value should be (but is not restricted to) one of the 3 HTML standard values "application/x-www-form-urlencoded", "multipart/form-data", "text/plain".
      */
-    constructor(url, name, method, fields) {
+    constructor(url, name, method, fields, enctype) {
         this.url = url; // action url
+        this.name = name;
         this.method = method; // http method : GET, POST, HEADER, PUT, DELETE, PATCH
         this.fields = fields;
+        this.enctype = enctype;
     }
 
     /**
@@ -82,6 +85,7 @@ function parseHtml(html) {
         f.action = $form.attr('action');
         f.method = $form.attr('method');
         if (f.method) f.method = f.method.toUpperCase();
+        if ($form.attr('enctype')) f.enctype = $form.attr('enctype');
 
         $form.find('input').each((i, elem) => {
             let o = {};
@@ -104,7 +108,7 @@ function parseHtml(html) {
 
         // TODO : check uppercase attribute names are lowercased by cheerio
 
-        var iv = new InputVector(f.action, f.name, f.method, f.fields);
+        var iv = new InputVector(f.action, f.name, f.method, f.fields, f.enctype);
         ret.push(iv);
     });
 

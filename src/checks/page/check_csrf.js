@@ -19,10 +19,13 @@
 var Check = require('../../check');
 var request = require('request');
 var url = require('url');
+var async = require('async');
 const CONSTANTS = require("../../constants.js");
 let inputVector = require('../../inputVector.js');
 var AutoLogin = require("../../autoLogin.js");
 var params = require('../../params.js');
+
+var falsePositives = ["stripe-card-number"]; // stripe.com ajax form
 
 /**
 * This class checks html forms CSRF securization.
@@ -35,22 +38,6 @@ module.exports = class CheckCSRF extends Check {
         this.ivs;
         this.ivsNotConnected;
         this._cancellationToken = "";
-        this._COMMON_CSRF_NAMES = [
-            'csrf_token',
-            'CSRFName',                   // OWASP CSRF_Guard
-            'CSRFToken',                  // OWASP CSRF_Guard
-            'anticsrf',                   // AntiCsrfParam.java
-            '_RequestVerificationToken',  // AntiCsrfParam.java
-            'token',
-            'csrf',
-            'YII_CSRF_TOKEN',             // http://www.yiiframework.com//
-            'yii_anticsrf',               // http://www.yiiframework.com//
-            '[_token]',                   // Symfony 2.x
-            '_csrf_token',                // Symfony 1.4
-            'csrfmiddlewaretoken',        // Django 1.5
-            'form_key',                   // Magento 1.9
-            'authenticity_token'          // Twitter
-        ];
     }
 
     /**
@@ -100,22 +87,32 @@ module.exports = class CheckCSRF extends Check {
                             }
                         }
 
+                        // add form to elligible forms array "arrayOfConnectedOnlyForms"
                         if (!found) {
-                            arrayOfConnectedOnlyForms.push(formConnected);
+                            // filter out false positives with known relevant strings stored in falsePositives array.
+                            // note : this method is weak and should be enhanced. An evolution would be to use phantomJs to execute js and be able to work with handlers, as explained next.
+                            let falsePositive = false;
+                            for (let f of formConnected.fields) {
+                                if (falsePositives.indexOf("stripe-card-number") !== -1) { 
+                                    falsePositive = true;
+                                    break;
+                                }
+                            }
+                            if (!falsePositive) arrayOfConnectedOnlyForms.push(formConnected);
                         }
                     }
                     for (let iv of arrayOfConnectedOnlyForms) {
-                        let foundCSRF = false;
-                        for (let field of iv.fields) {
-                            if (field.type == 'hidden' && this._COMMON_CSRF_NAMES.indexOf(field.name) != -1) {
-                                foundCSRF = true;
-                            }
-                        }
+                        let csrfField = self.getCsrfField(iv);
 
-                        if (!foundCSRF) {
-                            self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with no CSRF protection", true);
+                        if (!csrfField) {
+                            // Note : this check is prone to false positives in case of ajax forms which don't contain csrf token hidden input but where csrf protection is handled by js code. 
+                            // A possibility could be to detect such forms with phantom js by detecting event handlers on forms or form buttons
+                            self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with no CSRF protection. (This may be a false positive in case of an ajax form).", true);
                         }
                     }
+
+                    // Now, we check if anti-csrf tokens are correctly generated and checked
+                    // Inspired by https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                     self.getAnotherToken(cancellationToken, (ivs2) => {
                         if (typeof ivs2 === 'error') {
                             done(ivs2);
@@ -123,38 +120,92 @@ module.exports = class CheckCSRF extends Check {
                         }
 
                         if (ivs2 && ivs2.length > 0) {
+                            let goodCouples = [];
                             for (let iv1 of self.ivs) {
+                                let csrfField1 = self.getCsrfField(iv1);
 
-                                var csrfValue1 = null;
-                                for (let field of iv1.fields) {
-                                    if (field.type == 'hidden' && this._COMMON_CSRF_NAMES.indexOf(field.name) != -1) {
-                                        csrfValue1 = field.value;
-                                    }
-                                }
-
-                                if (csrfValue1) {
+                                if (csrfField1) {
                                     for (let iv2 of ivs2) {
                                         if (iv1.isSameVector(iv2)) {
-                                            var csrfValue2 = null;
-                                            for (let field of iv2.fields) {
-                                                if (field.type == 'hidden' && this._COMMON_CSRF_NAMES.indexOf(field.name) != -1) {
-                                                    csrfValue2 = field.value;
+                                            let csrfField2 = self.getCsrfField(iv2);
+
+                                            if (csrfField2) {
+                                                if (csrfField1.value === csrfField2.value) {
+                                                    // tokens are the same accross sessions
+                                                    self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with a CSRF token that is the same accross different sessions.", true);
+                                                } else {
+                                                    // the form has different anti csrf tokens. Remember them to check they're correctly checked.
+                                                    goodCouples.push([csrfField1, csrfField2, iv1]);
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            } 
 
-                                            if (csrfValue1 === csrfValue2) {
-                                                self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with a CSRF token that is the same accross different sessions.", true);
-                                            }
+                            let headers = {
+                                'content-type': 'application/x-www-form-urlencoded',
+                                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                                'accept-encoding': 'gzip, deflate',
+                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
+                                //  'referer': 'https://progressive-sports.co.uk/index.php/profile/edit/',
+                                //   'origin': 'https://progressive-sports.co.uk'
+                            };
 
-                                            // TODO : que fait-on s'il y a plusieurs champs qui ressemblent à des token CSF ?
+                            // check if csrf tokens are checked properly against their respective session by trying to use the anti-csrf token of a session from another session
+                            async.eachSeries(goodCouples, function (couple, callback) {
+                                let csrfField1 = couple[0];
+                                let csrfField2 = couple[1];
+                                let iv = couple[2];
+
+                                let formData = {};
+                                var actionUrl = url.resolve(self.target.uri, iv.url);
+                                var randomText = Math.random().toString(10).substr(2);
+                                for (let field of iv.fields) {
+                                    if (field.name) {
+                                        if (field.name == "akID[227][value]" || field.name == "account_last_name") {
+                                            formData[field.name] = randomText;
+                                        } else if (field.value) {
+                                            formData[field.name] = field.value;
+                                        } else {
+                                            formData[field.name] = '';
                                         }
                                     }
                                 }
 
-                                 TODO :
+                                formData[csrfField1.name] = csrfField2.value; // switch csrf token
+
+                                let req = {
+                                    method: iv.method,
+                                    url: actionUrl, timeout: 60000, cancellationToken: cancellationToken,
+                                    headers: headers,
+                                    form: formData,
+                                    jar: request.sessionJar,
+                                    followRedirect: false
+                                };
+
+                                if (iv.enctype == "multipart/form-data") {
+                                    req.form = undefined;
+                                    req.formData = formData;
+                                }
+                                request(req, (err, res, body) => {
+                                    if (err) {
+                                        callback(err);
+                                        return;
+                                    }
+
+                                    // woocommerce.com (WordPress) and progressive-sports.co.uk (Concrete 5) send a 302 on success and a 200 otherwise.
+                                    // note : Must improve following lines to handle other sites possible behavior.
+                                    if (res.statusCode == 302) {
+                                        self._raiseIssue("warning_csrf.xml", null, 'Form "' + iv.name + '" at url "' + self.target.uri.href + '" does not correctly check anti csrf tokens. An anti CSRF token from a session was succesfuly used in another session.', true);
+                                    }
+
+                                    callback();
+                                });
+
+                                // TODO :
                                 // - envoyer un referer dans les requetes pour passer sur les sites qui filtrent
                                 // - test unitaire sur les csrf token qui ne changent pas entre les versions
-                                // - nouvelle étape de check : vérifier qu'une session ne peut pas utiliser le token csrf d'une autre session : https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                                 //
                                 // En dehors de check_csrf
                                 // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
@@ -162,20 +213,33 @@ module.exports = class CheckCSRF extends Check {
                                 // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
                                 // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
                                 // - code coverage 100%
-                            }
-                            done();
+                            }, function (err) {
+                                if (err) {
+                                    done(err);
+                                } else {
+                                    done();
+                                    return;
+                                }
+                            });
                         } else {
-                            done(new Error('No forms found on session 2 in check_csrf'));
+                            done();
+                            return;
                         }
                     });
                 });
             }
             else {
                 done();
+                return;
             }
         });
     }
 
+    /**
+     * Opens a new session and get Input Vectors from this.target
+     * @param cancellationToken
+     * @param callback - called with and array of input vectors : callback(inputVectorArray)
+     */
     getAnotherToken(cancellationToken, callback) {
         let autoLogin = new AutoLogin();
         var self = this;
@@ -207,5 +271,56 @@ module.exports = class CheckCSRF extends Check {
                 callback(ivs);
             });
         });
+    }
+
+    /**
+     * Finds and returns the anti csrf field of an input vector.
+     * If no anti csrf token, returns null.
+     * @param inputVector
+     */
+    getCsrfField(inputVector) {
+        if (!inputVector) return null;
+        if (inputVector.fields.length <= 0) return null;
+
+        // obvious patterns
+        // if a field matches, the field is returned without looking at other fields
+        let regexTokens = [/csrf/i,
+            /xsrf/i,
+            /\[_token\]/,   // Symfony 2.x
+            /form_key/,     // Magento 1.9
+            /nonce/,     // e.g. WordPress
+        ];
+
+        for (let field of inputVector.fields) {
+            if (field.type == 'hidden') {
+                for (let r of regexTokens) {
+                    if (field.name.match(r)) {
+                        return field;
+                    }
+                }
+            }
+        }
+
+        // not so obvious patterns
+        // if a field is the only one to match, return it (if multiple fields match, we can't determine which one is the csrf token)
+        let notObviousRegexTokens = [/^token/i, /token$/i];
+
+        let fieldName = [];
+        let ret = null;
+        for (let field of inputVector.fields) {
+            if (field.type == 'hidden') {
+                for (let r of notObviousRegexTokens) {
+                    if (field.name.match(r)) {
+                        if (fieldName.indexOf(field.name) == -1) {
+                            fieldName.push(field.name);
+                            ret = field;
+                        }
+                    }
+                }
+            }
+        }
+        if (fieldName.length == 1) return ret;
+
+        return null;
     }
 };
