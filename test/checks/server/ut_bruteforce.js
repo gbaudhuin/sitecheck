@@ -187,14 +187,6 @@ var server = http.createServer(function (req, res) {
             '<input value="submit"/></form>');
     }
 
-    else if (req.url == '/firstRequestBug') {
-        sessionHelper.manageSession(req, res);
-
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end('<form action="http://localhost:8001/"><input type="text" name="username"/><input type="password" name="password"/>' +
-            '<button type="submit" value="submit"/></form>');
-    }
-
     // action url of login form.
     // Returns 302 if 'user', 'password', and sessid cookie match.
     // Returns 403 else.
@@ -323,17 +315,6 @@ describe('checks/server/check_bruteforce.js', function () {
         this.timeout(10000);
 
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/loginFormFailed', CONSTANTS.TARGETTYPE.SERVER));
-        check1.check(new CancellationToken()).then(() => {
-            done();
-        }).catch((issues) => {
-            done(new Error("expected issue was not raised"));
-        });
-    });
-
-    it('First request bug', function (done) {
-        this.timeout(10000);
-
-        var check1 = new CheckBruteforce(new Target('http://localhost:8000/firstRequestBug', CONSTANTS.TARGETTYPE.SERVER));
         check1.check(new CancellationToken()).then(() => {
             done();
         }).catch((issues) => {

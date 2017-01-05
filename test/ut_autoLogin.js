@@ -47,7 +47,8 @@ var account = {
 };
 
 let bodyError = '<form action="' + fields.action + '" method="get"><input type="text" name="username" value="value"/><input type="password" name="password" value="value"/><input type="submit" name="submit"/></form>';
-
+let bodyFirstRequestBug = '<form action="http://localhost:8001/" method="get"><input type="text" name="username"/><input type="password" name="password"/>' +
+    '<button type="submit" value="submit"/></form>';
 
 function shiftRand() {
     var r = 0;
@@ -147,6 +148,13 @@ var server = http.createServer(function (req, res) {
     else if (req.url == '/nodata') {
         res.writeHead(403, { "Content-Type": "text/html" });
         res.end(bodyError);
+    }
+
+    else if (req.url == '/firstRequestBug') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end(bodyFirstRequestBug);
     }
 
     else if (req.url == "/no_action") {
@@ -253,8 +261,8 @@ var server = http.createServer(function (req, res) {
             }
             else if (post.password === "") {
                 countReq2 = 1;
-                    res.writeHead(500);
-                    res.end('Server error ' + shiftRand());
+                res.writeHead(500);
+                res.end('Server error ' + shiftRand());
             }
             else {
                 res.writeHead(403);
@@ -293,7 +301,7 @@ var server = http.createServer(function (req, res) {
             else {
                 res.writeHead(403);
                 res.end('bad request' + shiftRand());
-            }  
+            }
         });
     }
 
@@ -365,6 +373,20 @@ describe('AutoLogin module', function () {
         });
     });
 
+    it('First request bug', function (done) {
+        this.timeout(5000);
+        let autoLogin = new AutoLogin();
+        let liv = autoLogin.findLoginInputVectorInContent(bodyFirstRequestBug);
+        console.log(liv);
+        autoLogin.getFailureIndicators('http://localhost:8000/firstRequestBug', liv, request.jar(), new CancellationToken(), (err, data) => {
+            if (err) {
+                done();
+            } else {
+                done(new Error("expected issue was not raised"));
+            }
+        });
+    });
+
     it('Url is host', function (done) {
         autoLogin.login('http://localhost:8000/urlIsHost', account.user, account.password, new CancellationToken(), (err, data) => {
             if (err || data.user !== account.user || data.password !== account.password) {
@@ -421,7 +443,7 @@ describe('AutoLogin module', function () {
             if (err && data === undefined && liv.isLoginForm()) {
                 done();
             }
-            else{
+            else {
                 done(new Error('Expected error not thrown'));
             }
         });
