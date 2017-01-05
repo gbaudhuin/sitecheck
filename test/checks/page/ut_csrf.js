@@ -181,7 +181,7 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it('detects unprotected forms', (done) => {
+    it.skip('detects unprotected forms', (done) => {
         let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
