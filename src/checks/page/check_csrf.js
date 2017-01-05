@@ -27,8 +27,15 @@ var params = require('../../params.js');
 
 var falsePositives = ["stripe-card-number"]; // stripe.com ajax form
 
+var headers = {
+    'content-type': 'application/x-www-form-urlencoded',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'accept-encoding': 'gzip, deflate',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
+};
+
 /**
-* This class checks html forms CSRF securization.
+* This class checks html forms CSRF security.
 * Checks the presence and robustness of CSRF tokens in "private" pages forms.
 * Publicly accessible forms are not checked because they're probably never a CSRF menace (Found a counterexample ? please tell or contribute).
 */
@@ -142,15 +149,7 @@ module.exports = class CheckCSRF extends Check {
                                     }
                                 }
                             } 
-
-                            let headers = {
-                                'content-type': 'application/x-www-form-urlencoded',
-                                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                                'accept-encoding': 'gzip, deflate',
-                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
-                                //  'referer': 'https://progressive-sports.co.uk/index.php/profile/edit/',
-                                //   'origin': 'https://progressive-sports.co.uk'
-                            };
+                            
 
                             // check if csrf tokens are checked properly against their respective session by trying to use the anti-csrf token of a session from another session
                             async.eachSeries(goodCouples, function (couple, callback) {
@@ -163,9 +162,7 @@ module.exports = class CheckCSRF extends Check {
                                 var randomText = Math.random().toString(10).substr(2);
                                 for (let field of iv.fields) {
                                     if (field.name) {
-                                        if (field.name == "akID[227][value]" || field.name == "account_last_name") {
-                                            formData[field.name] = randomText;
-                                        } else if (field.value) {
+                                        if (field.value) {
                                             formData[field.name] = field.value;
                                         } else {
                                             formData[field.name] = '';
@@ -208,10 +205,10 @@ module.exports = class CheckCSRF extends Check {
                                 // - test unitaire sur les csrf token qui ne changent pas entre les versions
                                 //
                                 // En dehors de check_csrf
-                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon d�roulement dans then
+                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
                                 // - reprendre les check (hormis bruteforce, csrf et autologin)  pour supprimer l'utilisation des Promise natives dans _check
-                                // - v�rifier les checks de Valerian : disclosure, cross_domain, error_page, headers
-                                // - changer les types de check qd n�cessaire : SERVER -> PAGE , etc.
+                                // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
+                                // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
                                 // - code coverage 100%
                             }, function (err) {
                                 if (err) {
