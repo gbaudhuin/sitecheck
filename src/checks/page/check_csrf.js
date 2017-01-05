@@ -35,9 +35,9 @@ var falsePositives = ["stripe-card-number"]; // stripe.com ajax form
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.PAGE, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
-        this.ivs = '';
-        this.ivsNotConnected = '';
-        this._cancellationToken = "";
+        this.ivs = null;
+        this.ivsNotConnected = null;
+        this._cancellationToken = null;
     }
 
     /**
@@ -93,9 +93,11 @@ module.exports = class CheckCSRF extends Check {
                             // note : this method is weak and should be enhanced. An evolution would be to use phantomJs to execute js and be able to work with handlers, as explained next.
                             let falsePositive = false;
                             for (let f of formConnected.fields) {
-                                if (falsePositives.indexOf("stripe-card-number") !== -1) { 
-                                    falsePositive = true;
-                                    break;
+                                for (let fp of falsePositives) {
+                                    if (f.indexOf(fp) !== -1) {
+                                        falsePositive = true;
+                                        break;
+                                    }
                                 }
                             }
                             if (!falsePositive) arrayOfConnectedOnlyForms.push(formConnected);
@@ -114,7 +116,7 @@ module.exports = class CheckCSRF extends Check {
                     // Now, we check if anti-csrf tokens are correctly generated and checked
                     // Inspired by https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                     self.getAnotherToken(cancellationToken, (ivs2) => {
-                        if (typeof ivs2 === 'error') {
+                        if (typeof ivs2 === Error) {
                             done(ivs2);
                             return;
                         }
@@ -141,7 +143,7 @@ module.exports = class CheckCSRF extends Check {
                                         }
                                     }
                                 }
-                            } 
+                            }
 
                             let headers = {
                                 'content-type': 'application/x-www-form-urlencoded',
@@ -208,10 +210,10 @@ module.exports = class CheckCSRF extends Check {
                                 // - test unitaire sur les csrf token qui ne changent pas entre les versions
                                 //
                                 // En dehors de check_csrf
-                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon d�roulement dans then
+                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
                                 // - reprendre les check (hormis bruteforce, csrf et autologin)  pour supprimer l'utilisation des Promise natives dans _check
-                                // - v�rifier les checks de Valerian : disclosure, cross_domain, error_page, headers
-                                // - changer les types de check qd n�cessaire : SERVER -> PAGE , etc.
+                                // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
+                                // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
                                 // - code coverage 100%
                             }, function (err) {
                                 if (err) {

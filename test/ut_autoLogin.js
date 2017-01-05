@@ -18,7 +18,6 @@
 
 var http = require('http');
 var fs = require('fs-extra');
-var tough = require('tough-cookie');
 var request = require('../src/requestwrapper.js');
 var async = require('async');
 var qs = require('querystring');
@@ -205,7 +204,7 @@ var server = http.createServer(function (req, res) {
             return;
         }
 
-        var body = '';
+        let body = '';
 
         req.on('data', function (data) {
             body += data;
@@ -237,7 +236,7 @@ var server = http.createServer(function (req, res) {
             return;
         }
 
-        var body = '';
+        let body = '';
 
         req.on('data', function (data) {
             body += data;
@@ -273,7 +272,7 @@ var server = http.createServer(function (req, res) {
             return;
         }
 
-        var body = '';
+        let body = '';
 
         req.on('data', function (data) {
             body += data;
@@ -308,7 +307,7 @@ var server = http.createServer(function (req, res) {
             return;
         }
 
-        var body = '';
+        let body = '';
 
         req.on('data', function (data) {
             body += data;
