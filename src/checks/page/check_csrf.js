@@ -27,6 +27,13 @@ var params = require('../../params.js');
 
 var falsePositives = ["stripe-card-number"]; // stripe.com ajax form
 
+var headers = {
+    'content-type': 'application/x-www-form-urlencoded',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'accept-encoding': 'gzip, deflate',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+};
+
 /**
 * This class checks html forms CSRF security.
 * Checks the presence and robustness of CSRF tokens in "private" pages forms.
@@ -94,7 +101,7 @@ module.exports = class CheckCSRF extends Check {
                             let falsePositive = false;
                             for (let f of formConnected.fields) {
                                 for (let fp of falsePositives) {
-                                    if (f.indexOf(fp) !== -1) {
+                                    if (f.name && f.name.indexOf(fp) !== -1) {
                                         falsePositive = true;
                                         break;
                                     }
