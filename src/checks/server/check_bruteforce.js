@@ -337,28 +337,30 @@ module.exports = class CheckBruteforce extends Check {
         var self = this;
         var found_user = null;
         var found_password = null;
-        async.detectSeries(self._passwordList, function (password, callback1) {
-            async.detectSeries(self._usernameList, function (user, callback2) {
-                request.post({
-                    headers: {
-                        "Authorization": "Basic : " + new Buffer(user + ":" + password).toString('base64')
-                    },
-                    url: self.target.uri,
-                    timeout: 15000,
-                    cancellationToken: cancellationToken
-                }, (err, res, body) => {
-                    if (res.statusCode === 200) {
-                        callback2(null, true);
-                    } else {
-                        callback2(null, false);
-                    }
-                });
-            }, function (err, result) {
-                if (result) {
-                    found_user = result;
-                    callback1(err, true);
+
+        var arr = [];
+        for (let i of self._passwordList) {
+            for (let j of self._usernameList) {
+                arr.push([i, j]);
+            }
+        }
+        
+        async.detect(arr, function (el, cb) {
+            let password = el[0];
+            let user = el[1];
+            request.post({
+                headers: {
+                    "Authorization": "Basic : " + new Buffer(user + ":" + password).toString('base64')
+                },
+                url: self.target.uri,
+                timeout: 60000,
+                cancellationToken: cancellationToken
+            }, (err, res, body) => {
+                if (res.statusCode === 200) {
+                    cb(null, true);
+                } else {
+                    cb(null, false);
                 }
-                else callback1(err, false);
             });
         }, function (err, result) {
             if (result) {

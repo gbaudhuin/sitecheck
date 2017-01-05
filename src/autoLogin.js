@@ -200,7 +200,6 @@ class AutoLogin {
                     followRedirect: false // we need to get statusCode before any redirection
                 };
 
-                //console.log(req1);
                 request(req1, (err, res, body) => {
                     if (err) {
                         callback(new Error(err));
