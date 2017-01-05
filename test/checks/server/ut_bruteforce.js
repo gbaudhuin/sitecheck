@@ -284,7 +284,6 @@ describe('checks/server/check_bruteforce.js', function () {
                 issues[0].errorContent &&
                 issues[0].errorContent.indexOf(fields.username) !== -1 &&
                 issues[0].errorContent.indexOf(fields.password) !== -1) {
-                    console.log(issues[0].errorContent);
                 done();
             }
             else {

@@ -66,7 +66,6 @@ describe('Params.js', function () {
             // invalid check name
             var p = { url: "http://www.example.com", checks: ["headers", "b*"], log: true };
             var opts = Params.gatherScanParams(p);
-            console.log(Params);
             var winston_stream = winston.stream({ start: -1 });
             winston_stream.on('log', function (log) {
                 // at this point the file is supposed to created
