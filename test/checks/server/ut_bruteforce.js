@@ -183,8 +183,8 @@ var server = http.createServer(function (req, res) {
         sessionHelper.manageSession(req, res);
 
         res.writeHead(200, { "Content-Type": "text/html" });
-        res.end('<form action="http://localhost:8000' + fieldsFail.action + '" method="POST">' +
-            '<input value="submit"/></form>');
+        res.end('<form action="http://localhost:8000' + fieldsFail.action + '" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<button type="submit" formaction="http://localhost:8000' + fieldsFail.action + '" value="submit"/></form>');
     }
 
     // action url of login form.
@@ -217,7 +217,7 @@ var server = http.createServer(function (req, res) {
                 res.end();
             } else {
                 res.writeHead(403);
-                res.end('bad request : wrong credentials ' + Math.random());
+                res.end('bad request : wrong credentials');
             }
         });
     }
@@ -284,6 +284,7 @@ describe('checks/server/check_bruteforce.js', function () {
                 issues[0].errorContent &&
                 issues[0].errorContent.indexOf(fields.username) !== -1 &&
                 issues[0].errorContent.indexOf(fields.password) !== -1) {
+                    console.log(issues[0].errorContent);
                 done();
             }
             else {
