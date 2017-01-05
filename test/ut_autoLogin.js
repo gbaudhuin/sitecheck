@@ -377,7 +377,6 @@ describe('AutoLogin module', function () {
         this.timeout(5000);
         let autoLogin = new AutoLogin();
         let liv = autoLogin.findLoginInputVectorInContent(bodyFirstRequestBug);
-        console.log(liv);
         autoLogin.getFailureIndicators('http://localhost:8000/firstRequestBug', liv, request.jar(), new CancellationToken(), (err, data) => {
             if (err) {
                 done();
