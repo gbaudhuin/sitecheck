@@ -202,15 +202,13 @@ class AutoLogin {
 
                 request(req1, (err, res, body) => {
                     if (err) {
-                        console.log(123);
-                        callback(err);
+                        callback(new Error(err));
                         return;
                     }
 
                     var ret = [{ res, body }];
-                    console.log(ret);
                     request(req2, (err, res, body) => {
-                        console.log(234);
+                        /* istanbul ignore else */
                         if (!err) {
                             ret.push({ res, body });
 
@@ -290,7 +288,7 @@ class AutoLogin {
                 if (failureIndicators[0].bodyIdenticalBeginningLength) {
                     // If content beginning is different from failure cases beginning, consider we're logged in.
                     let maxLength = Math.min(body.length, failureIndicators[0].bodyIdenticalBeginningLength);
-                    failureIndicators[0].body;
+                    //failureIndicators[0].body;
                     for (var i = 0; i < maxLength; i++) {
                         if (failureIndicators[0].body[i] != body[i]) {
                             callback(null, { user: user, password: password, cookieJar: cookieJar });
@@ -298,7 +296,6 @@ class AutoLogin {
                         }
                     }
                 }
-
                 callback(new Error("not connected"), null);
             });
         });

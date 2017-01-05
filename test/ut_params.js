@@ -34,7 +34,7 @@ describe('Params.js', function () {
         assert.equal(exceptionRaised, false);
     });
 
-    describe('#gatherScanParams', function () {
+    describe.skip('#gatherScanParams', function () {
         beforeEach(function () {
             try {
                 // app adds a transports.File each time it runs : we need to reset winston transports each time
@@ -58,7 +58,7 @@ describe('Params.js', function () {
             });
         });
 
-        it('generates log directory if it does not exist', function (done) {
+        it.skip('generates log directory if it does not exist', function (done) {
             // remove unit tests logs 
             try {
                 fs.removeSync('./log');
