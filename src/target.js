@@ -16,6 +16,7 @@
  */
 "use strict";
 var isRelativeUrl = require('is-relative-url');
+var Url = require('url');
 
 /**
  * An atomic scan target
@@ -23,12 +24,14 @@ var isRelativeUrl = require('is-relative-url');
 class Target {
     /**
      * Constructor
-     * @param {String} uri - Url of target. Must be an absolute uri.
+     * @param {String or urlObject} uri - Url of target. Must be an absolute uri.
      * @param {TargetType} targetType
      */
     constructor(uri, targetType) {
-        if (uri && isRelativeUrl(uri)) throw new Error("uri cannot be relative. Uri must be absolute.");
-        this.uri = uri;
+        var urlObj = Url.parse(uri);
+
+        if (urlObj && urlObj.href && isRelativeUrl(urlObj.href)) throw new Error("uri cannot be relative. Uri must be absolute.");
+        this.uri = urlObj;
         this.targetType = targetType;
     }
 }

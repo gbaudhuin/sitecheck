@@ -158,7 +158,7 @@ class AutoLogin {
     }
 
     /**
-     * Gets typical response data obtained from failed login attemps.
+     * Gets typical response data obtained from failed login attempts.
      * This data is intented to be compared with other login attempts responses to tell if they're successful.
      * Results of first call are memorized. Subsequent calls will use memorized results and are instantaneous.
      * @param absoluteLoginFormUri
@@ -255,14 +255,21 @@ class AutoLogin {
         var f = this.getFormData(inputVector, user, password);
 
         this.getFailureIndicators(absoluteLoginFormUri, inputVector, cookieJar, cancellationToken, (err, failureIndicators) => {
-            request({
+            let req = {
                 method: inputVector.method,
                 url: inputVector.url, timeout: 10000, cancellationToken: cancellationToken,
                 headers: headers,
                 form: f,
                 jar: cookieJar,
                 followRedirect: false // we need to get statusCode before any redirection
-            }, (err, res, body) => {
+            };
+
+            if (inputVector.enctype == "multipart/form-data") {
+                req.form = undefined;
+                req.formData = f;
+            }
+
+            request(req, (err, res, body) => {
                 if (err) {
                     callback(err);
                     return;

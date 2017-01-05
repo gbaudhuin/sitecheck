@@ -141,7 +141,7 @@ var server = http.createServer(function (req, res) {
 
 
 describe('checks/server/check_csrf.js', function () {
-    this.timeout(5000);
+    this.timeout(50000);
 
     before((done) => {
         server.listen(8000);
@@ -188,6 +188,60 @@ describe('checks/server/check_csrf.js', function () {
             done(new Error("Expected issue not raised"));
         }).catch((value) => {
             done();
+        });
+    });
+
+    it('hacks Concrete5 < v5.7.3.2', (done) => {
+        params.loginPage = 'https://progressive-sports.co.uk/login';
+        params.user = 'sitecheck.ut@gmail.com';
+        params.password = 'sitechec';
+
+        // get a connected session
+        autoLogin.login(params.loginPage, params.user, params.password, ct, (err, data) => {
+            if (err) {
+                done(new Error("login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let target = new Target('https://progressive-sports.co.uk/profile/edit/', CONSTANTS.TARGETTYPE.PAGE);
+                let check = new CheckCsrf(target);
+                check.check(ct).then((value) => {
+                    done(new Error("Expected issue not raised"));
+                }).catch((value) => {
+                    done();
+                });
+            }
+        });
+    });
+
+    it(' is able to check a woocommerce.com form is correctly protected', (done) => {
+        params.loginPage = 'https://woocommerce.com/my-account/';
+        params.user = 'sitecheck.ut@gmail.com';
+        params.password = 'sitechec';
+
+        // get a connected session
+        autoLogin.login(params.loginPage, params.user, params.password, ct, (err, data) => {
+            if (err) {
+                done(new Error("login failed."));
+            } else {
+                if (!data) done(new Error("No data"));
+                if (!data.cookieJar) done(new Error("No data.cookieJar"));
+
+                // we're logged in, preserve cookies for all subsequent requests
+                request.sessionJar = data.cookieJar;
+
+                let target = new Target('https://woocommerce.com/my-account/', CONSTANTS.TARGETTYPE.PAGE);
+                let check = new CheckCsrf(target);
+                check.check(ct).then((value) => {
+                    done();
+                }).catch((value) => {
+                    done(new Error("Unexpected issue raised"));
+                });
+            }
         });
     });
     
