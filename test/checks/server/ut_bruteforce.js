@@ -43,21 +43,6 @@ var fieldsFail = {
     csrf_value: helpers.token()
 };
 
-function shiftRand() {
-    var r = 0;
-    var raw = 0;
-    var maxint = Math.pow(2, 32);
-    for (var i = 1000000; i > 0; i--) {
-        raw = parseInt(Math.random() * maxint);
-        for (var j = 0; j < 15; j++) {
-            r = raw & 3;
-            raw = raw >> 2;
-            i--;
-        }
-    }
-    return raw;
-}
-
 var server = http.createServer(function (req, res) {
     if (req.url == '/basic_auth') {
         let authString = "Basic : " + new Buffer(fields.username + ":" + fields.password).toString('base64');
@@ -84,6 +69,17 @@ var server = http.createServer(function (req, res) {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form action="http://localhost:8000' + fields.action + '" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
             '<button type="submit" formaction="http://localhost:8000' + fields.action + '" value="submit"/></form>');
+    }
+
+    /**
+     *  Login form used with /connectRandomBody
+     */
+    else if (req.url == '/loginFormRnd') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8000/connectRandomBody" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<button type="submit" formaction="http://localhost:8000/connectRandomBody" value="submit"/></form>');
     }
 
     else if (req.url == '/notloginForm') {
@@ -130,7 +126,42 @@ var server = http.createServer(function (req, res) {
                 res.end();
             } else {
                 res.writeHead(403);
-                res.end('bad request : wrong credentials ' + shiftRand());
+                res.end('bad request : wrong credentials' /*+ Math.floor(Math.random() * 2)*/);
+            }
+        });
+    }
+
+    /**
+     * Use for testing 2 different body with a random String at the end.
+     */
+    else if (req.url == '/connectRandomBody') {
+        sessionHelper.manageSession(req, res);
+
+        // user must have a valid existing sessid to connect
+        if (!sessionHelper.isValidSession(req)) {
+            res.writeHead(403);
+            res.end('bad request : invalid sessid');
+            return;
+        }
+
+        let body = '';
+
+        req.on('data', function (data) {
+            body += data;
+
+            // Prevent malicious flooding
+            if (body.length > 1e6) req.connection.destroy();
+        });
+
+        req.on('end', function () {
+            var post = qs.parse(body);
+            if (post.password == fields.password && post.username == fields.username) {
+                res.writeHead(302, { 'Location': '/content' });
+                sessionHelper.connectSession(req);
+                res.end();
+            } else {
+                res.writeHead(403);
+                res.end('bad request : wrong credentials' + Math.random() * Math.random());
             }
         });
     }
@@ -194,7 +225,7 @@ var server = http.createServer(function (req, res) {
                 res.end();
             } else {
                 res.writeHead(403);
-                res.end('bad request : wrong credentials ' + shiftRand());
+                res.end('bad request : wrong credentials ' + Math.random());
             }
         });
     }
@@ -220,7 +251,7 @@ describe('checks/server/check_bruteforce.js', function () {
         server.listen(8000);
     });
 
-    it.only('basic auth works', function (done) {
+    it('basic auth works', function (done) {
         this.timeout(2000);
 
         let check = new CheckBruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
@@ -239,7 +270,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('basic auth does not work', function (done) {
+    it('basic auth does not work', function (done) {
         this.timeout(2000);
 
         let check = new CheckBruteforce(new Target('http://localhost:8000/basic_auth_fail', CONSTANTS.TARGETTYPE.SERVER));
@@ -251,7 +282,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('form auth works', function (done) {
+    it('form auth works', function (done) {
         this.timeout(10000);
         var check = new CheckBruteforce(new Target('http://localhost:8000/loginForm', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
@@ -263,12 +294,32 @@ describe('checks/server/check_bruteforce.js', function () {
                 issues[0].errorContent.indexOf(fields.password) !== -1) {
                 done();
             }
-            else
+            else {
+                console.log(issues[0].errorContent);
                 done(new Error("expected issue was not raised"));
+            }
         });
     });
 
-    it.only('form auth does not work', function (done) {
+    it('form auth works but with random string at the end', function (done) {
+        this.timeout(10000);
+        var check = new CheckBruteforce(new Target('http://localhost:8000/loginFormRnd', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 &&
+                issues[0].errorContent &&
+                issues[0].errorContent.indexOf(fields.username) !== -1 &&
+                issues[0].errorContent.indexOf(fields.password) !== -1) {
+                done(new Error("expected issue was not raised"));
+            }
+            else {
+                done();
+            }
+        });
+    });
+
+    it('form auth does not work', function (done) {
         this.timeout(10000);
 
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/loginFormFailed', CONSTANTS.TARGETTYPE.SERVER));
@@ -279,7 +330,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('First request bug', function (done) {
+    it('First request bug', function (done) {
         this.timeout(10000);
 
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/firstRequestBug', CONSTANTS.TARGETTYPE.SERVER));
@@ -290,7 +341,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('not a login form', function (done) {
+    it('not a login form', function (done) {
         this.timeout(10000);
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/notloginForm', CONSTANTS.TARGETTYPE.SERVER));
         check1.check(new CancellationToken()).then(() => {
@@ -300,7 +351,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('no formaction', function (done) {
+    it('no formaction', function (done) {
         this.timeout(10000);
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/no_button_formaction', CONSTANTS.TARGETTYPE.SERVER));
         check1.check(new CancellationToken()).then(() => {
@@ -310,7 +361,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('is not html', function (done) {
+    it('is not html', function (done) {
         this.timeout(10000);
         var check1 = new CheckBruteforce(new Target('http://localhost:8000/empty', CONSTANTS.TARGETTYPE.SERVER));
         check1.check(new CancellationToken()).then(() => {
@@ -320,7 +371,7 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it.only('is cancellable', function (done) {
+    it('is cancellable', function (done) {
         this.timeout(2000);
         var ct = new CancellationToken();
 

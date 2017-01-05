@@ -58,7 +58,13 @@ function request(uri, options, callback) {
             winston.log('debug', res.statusCode + ' : ' + res.request.uri.href);
         } else {
             if (err.code) {
-                winston.log('warn', err.code + ' : ' + err.message);
+                /** 
+                 * Remove this when in production
+                 * It disable logging for forced dev errors
+                 */
+                if(err.message.indexOf('127.0.0.1:8001') === -1){
+                    winston.log('warn', err.code + ' : ' + err.message);
+                }  
             } else {
                 winston.log('warn', err.message);
             }

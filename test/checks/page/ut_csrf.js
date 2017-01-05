@@ -166,7 +166,7 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it.only('passes csrf protected forms', (done) => {
+    it('passes csrf protected forms', (done) => {
         var urls = ['http://localhost:8000/csrf_ok1',
                     'http://localhost:8000/csrf_ok2'];
 
@@ -181,17 +181,17 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it.only('detects unprotected forms', (done) => {
+    it('detects unprotected forms', (done) => {
         let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
-            done(new Error("Expected issue not raised"));
-        }).catch((value) => {
             done();
+        }).catch((value) => {
+            done(new Error("Expected issue not raised"));
         });
     });
 
-    it('hacks Concrete5 < v5.7.3.2', (done) => {
+    it.skip('hacks Concrete5 < v5.7.3.2', (done) => {
         params.loginPage = 'https://progressive-sports.co.uk/login';
         params.user = 'sitecheck.ut@gmail.com';
         params.password = 'sitechec';
@@ -218,7 +218,7 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it(' is able to check a woocommerce.com form is correctly protected', (done) => {
+    it.skip(' is able to check a woocommerce.com form is correctly protected', (done) => {
         params.loginPage = 'https://woocommerce.com/my-account/';
         params.user = 'sitecheck.ut@gmail.com';
         params.password = 'sitechec';

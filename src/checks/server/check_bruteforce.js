@@ -383,7 +383,6 @@ module.exports = class CheckBruteforce extends Check {
             callback();
             return;
         }
-        if (iv.isLoginForm()) {
             var found_user = null;
             var found_password = null;
             async.detectSeries(self._passwordList, function (password, callback1) {
@@ -410,6 +409,5 @@ module.exports = class CheckBruteforce extends Check {
 
                 callback();
             });
-        }
     }
 };

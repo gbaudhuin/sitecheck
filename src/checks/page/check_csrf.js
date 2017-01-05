@@ -27,13 +27,6 @@ var params = require('../../params.js');
 
 var falsePositives = ["stripe-card-number"]; // stripe.com ajax form
 
-var headers = {
-    'content-type': 'application/x-www-form-urlencoded',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'accept-encoding': 'gzip, deflate',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
-};
-
 /**
 * This class checks html forms CSRF security.
 * Checks the presence and robustness of CSRF tokens in "private" pages forms.
@@ -42,9 +35,9 @@ var headers = {
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.PAGE, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
-        this.ivs = '';
-        this.ivsNotConnected = '';
-        this._cancellationToken = "";
+        this.ivs = null;
+        this.ivsNotConnected = null;
+        this._cancellationToken = null;
     }
 
     /**
@@ -100,9 +93,11 @@ module.exports = class CheckCSRF extends Check {
                             // note : this method is weak and should be enhanced. An evolution would be to use phantomJs to execute js and be able to work with handlers, as explained next.
                             let falsePositive = false;
                             for (let f of formConnected.fields) {
-                                if (falsePositives.indexOf("stripe-card-number") !== -1) { 
-                                    falsePositive = true;
-                                    break;
+                                for (let fp of falsePositives) {
+                                    if (f.indexOf(fp) !== -1) {
+                                        falsePositive = true;
+                                        break;
+                                    }
                                 }
                             }
                             if (!falsePositive) arrayOfConnectedOnlyForms.push(formConnected);
@@ -121,7 +116,7 @@ module.exports = class CheckCSRF extends Check {
                     // Now, we check if anti-csrf tokens are correctly generated and checked
                     // Inspired by https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                     self.getAnotherToken(cancellationToken, (ivs2) => {
-                        if (typeof ivs2 === 'error') {
+                        if (typeof ivs2 === Error) {
                             done(ivs2);
                             return;
                         }
@@ -148,7 +143,7 @@ module.exports = class CheckCSRF extends Check {
                                         }
                                     }
                                 }
-                            } 
+                            }
                             
 
                             // check if csrf tokens are checked properly against their respective session by trying to use the anti-csrf token of a session from another session

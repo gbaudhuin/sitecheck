@@ -128,11 +128,11 @@ module.exports = class CheckCrossDomain extends Check {
                 }
                 let $ = cheerio.load(body);
                 $('script').each(function () {
-                    for (let reg in SECURED_DOMAINS) if (SECURED_DOMAINS.hasOwnProperty(reg)) {
-                        let currentDomain = self.extractDomain(self.target.uri);
+                    for (let reg of SECURED_DOMAINS) {
+                        let currentDomain = self.target.uri.hostname;
                         let matched = $(this).attr('src');
                         if (matched !== undefined) {
-                            if (matched.indexOf(currentDomain) === -1 && matched.indexOf(SECURED_DOMAINS[reg]) !== -1) {
+                            if (matched.indexOf(currentDomain) === -1 && matched.indexOf(reg) !== -1) {
                                 found = true;
                             }
                         }
@@ -146,7 +146,7 @@ module.exports = class CheckCrossDomain extends Check {
             });
     }
 
-    extractDomain(url) {
+    /*extractDomain(url) {
         var domain;
         //find & remove protocol (http, ftp, etc.) and get domain
         domain = url.split('/')[2];
@@ -154,5 +154,5 @@ module.exports = class CheckCrossDomain extends Check {
         domain = domain.split(':')[0];
 
         return domain;
-    }
+    }*/
 };
