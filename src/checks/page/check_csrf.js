@@ -32,8 +32,8 @@ var params = require('../../params.js');
 module.exports = class CheckCSRF extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.PAGE, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
-        this.ivs;
-        this.ivsNotConnected;
+        this.ivs = '';
+        this.ivsNotConnected = '';
         this._cancellationToken = "";
         this._COMMON_CSRF_NAMES = [
             'csrf_token',
@@ -146,21 +146,21 @@ module.exports = class CheckCSRF extends Check {
                                                 self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with a CSRF token that is the same accross different sessions.", true);
                                             }
 
-                                            // TODO : que fait-on s'il y a plusieurs champs qui ressemblent à des token CSF ?
+                                            // TODO : que fait-on s'il y a plusieurs champs qui ressemblent ï¿½ des token CSF ?
                                         }
                                     }
                                 }
 
-                                 TODO :
+                                 //TODO :
                                 // - envoyer un referer dans les requetes pour passer sur les sites qui filtrent
                                 // - test unitaire sur les csrf token qui ne changent pas entre les versions
-                                // - nouvelle étape de check : vérifier qu'une session ne peut pas utiliser le token csrf d'une autre session : https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
+                                // - nouvelle ï¿½tape de check : vï¿½rifier qu'une session ne peut pas utiliser le token csrf d'une autre session : https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                                 //
                                 // En dehors de check_csrf
-                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
+                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon dï¿½roulement dans then
                                 // - reprendre les check (hormis bruteforce, csrf et autologin)  pour supprimer l'utilisation des Promise natives dans _check
-                                // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
-                                // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
+                                // - vï¿½rifier les checks de Valerian : disclosure, cross_domain, error_page, headers
+                                // - changer les types de check qd nï¿½cessaire : SERVER -> PAGE , etc.
                                 // - code coverage 100%
                             }
                             done();

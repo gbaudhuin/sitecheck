@@ -18,14 +18,12 @@
 
 let Check = require('../../check');
 let request = require('request');
-var winston = require("winston");
 var async = require("async");
 const CONSTANTS = require("../../constants.js");
-let inputVector = require('../../inputVector.js');
 var AutoLogin = require('../../../src/autoLogin.js');
 
 
-module.exports = class CheckHeaders extends Check {
+module.exports = class CheckBruteforce extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
         this.autoLogin = new AutoLogin();
@@ -385,32 +383,33 @@ module.exports = class CheckHeaders extends Check {
             callback();
             return;
         }
-
-        var found_user = null;
-        var found_password = null;
-        async.detectSeries(self._passwordList, function (password, callback1) {
-            async.detectSeries(self._usernameList, function (username, callback2) {
-                self.autoLogin.logInInputVector(self.target.uri, iv, username, password, cookieJar, self._cancellationToken, (err, data) => {
-                    if (data && data.cookieJar) {
-                        callback2(null, true);
-                    } else {
-                        callback2(null, false);
+        if (iv.isLoginForm()) {
+            var found_user = null;
+            var found_password = null;
+            async.detectSeries(self._passwordList, function (password, callback1) {
+                async.detectSeries(self._usernameList, function (username, callback2) {
+                    self.autoLogin.logInInputVector(self.target.uri, iv, username, password, cookieJar, self._cancellationToken, (err, data) => {
+                        if (data && data.cookieJar) {
+                            callback2(null, true);
+                        } else {
+                            callback2(null, false);
+                        }
+                    });
+                }, function (err, result) {
+                    if (result) {
+                        found_user = result;
+                        callback1(err, true);
                     }
+                    else callback1(err, false);
                 });
             }, function (err, result) {
                 if (result) {
-                    found_user = result;
-                    callback1(err, true);
+                    found_password = result;
+                    self._raiseIssue("BruteForce_FormAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);
                 }
-                else callback1(err, false);
-            });
-        }, function (err, result) {
-            if (result) {
-                found_password = result;
-                self._raiseIssue("BruteForce_FormAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);
-            }
 
-            callback();
-        });
+                callback();
+            });
+        }
     }
 };

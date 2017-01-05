@@ -25,13 +25,12 @@ module.exports = class CheckHeaders extends Check {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
-    _check(cancellationToken) {
+    _check(cancellationToken, done) {
         var self = this;
         var timeout = 3000;
-        return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
                 if (err && err.cancelled) {
-                    reject(err);
+                    done(err);
                     return;
                 }
 
@@ -46,8 +45,7 @@ module.exports = class CheckHeaders extends Check {
                 if(res.headers['x-content-type-options'] && (res.headers['x-content-type-options']).toLowerCase() !== 'nosniff'){
                     self._raiseIssue("x_content_type_options_missing.xml", null, "X-Content-Type-Options found but value is no nosniff, consider changing that '" + res.request.uri.href + "'", true);
                 }
-                resolve();
+                done();
             });
-        });
     }
 };

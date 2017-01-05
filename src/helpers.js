@@ -32,9 +32,11 @@ exports.token = function() {
 };
 
 /**
-* Gets an array of cookies from a request
-*/
-exports.parseCookies = function (request) {
+ * Gets an array of cookies from a request
+ * The function is not currently used but is working
+ */
+
+/*exports.parseCookies = function (request) {
     var list = {},
         rc = request.headers.cookie;
 
@@ -44,4 +46,4 @@ exports.parseCookies = function (request) {
     });// jshint ignore:line
 
     return list;
-};
+};*/

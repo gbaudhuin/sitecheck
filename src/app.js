@@ -16,13 +16,10 @@
  */
 "use strict";
 
-var fs = require("fs");
-var valid_url = require("valid-url");
 var winston = require("winston");
 var Target = require('./target.js');
 var params = require('./params.js');
 var CancellationToken = require('./cancellationToken.js');
-const url = require('url');
 const CONSTANTS = require("./constants.js");
 
 winston.remove(winston.transports.Console);

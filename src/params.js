@@ -20,6 +20,7 @@ var fs = require("fs");
 var valid_url = require("valid-url");
 var winston = require("winston");
 const url = require('url');
+var checkMap = new Map();
 
 function Params() {
     // common options
@@ -148,7 +149,7 @@ function Params() {
             }
         }
         this.checks = verified_checks;
-    }
+    };
 }
 
 var p = new Params();

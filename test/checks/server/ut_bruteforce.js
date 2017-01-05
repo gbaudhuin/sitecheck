@@ -18,8 +18,6 @@
 'use strict';
 var http = require('http');
 var qs = require('querystring');
-var tough = require('tough-cookie');
-var Promise = require('bluebird');
 var SessionHelper = require('../../helpers/sessionHelper.js');
 var Target = require('../../../src/target.js');
 var CancellationToken = require('../../../src/cancellationToken.js');
@@ -37,9 +35,32 @@ var fields = {
     csrf_value: helpers.token()
 };
 
+var fieldsFail = {
+    action: '/connectFailed',
+    username: 'wrong_username',
+    password: 'wrong_password',
+    csrf: 'authenticity_token',
+    csrf_value: helpers.token()
+};
+
+function shiftRand() {
+    var r = 0;
+    var raw = 0;
+    var maxint = Math.pow(2, 32);
+    for (var i = 1000000; i > 0; i--) {
+        raw = parseInt(Math.random() * maxint);
+        for (var j = 0; j < 15; j++) {
+            r = raw & 3;
+            raw = raw >> 2;
+            i--;
+        }
+    }
+    return raw;
+}
+
 var server = http.createServer(function (req, res) {
     if (req.url == '/basic_auth') {
-        var authString = "Basic : " + new Buffer(fields.username + ":" + fields.password).toString('base64');
+        let authString = "Basic : " + new Buffer(fields.username + ":" + fields.password).toString('base64');
         if (req.headers.authorization !== authString) {
             res.statusCode = 401;
             res.setHeader('WWW-Authenticate', 'Basic realm="example"');
@@ -51,12 +72,32 @@ var server = http.createServer(function (req, res) {
     }
 
     // a page protected by an html login form
+    else if (req.url == '/empty') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('');
+    }
+
+    // a page protected by an html login form
     else if (req.url == '/loginForm') {
         sessionHelper.manageSession(req, res);
 
-        res.writeHead(200, { "Content-Type": "text/html"});
+        res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<form action="http://localhost:8000' + fields.action + '" method="POST"><input type="text" name="username"/><input type="password" name="password"/>' +
-            '<input type="submit" value="submit"/></form>');
+            '<button type="submit" formaction="http://localhost:8000' + fields.action + '" value="submit"/></form>');
+    }
+
+    else if (req.url == '/notloginForm') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8000' + fields.action + '" method="POST"><input type="text" name="comment"/>' +
+            '<button type="not_submit" formaction="http://localhost:8000' + fields.action + '" value="submit"/></form>');
+    }
+
+    else if (req.url == '/no_button_formaction') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8000' + fields.action + '" method="POST"><input type="text" name="comment"/>' +
+            '<button type="not_submit" value="submit"/></form>');
     }
 
     // action url of login form.
@@ -72,7 +113,7 @@ var server = http.createServer(function (req, res) {
             return;
         }
 
-        var body = '';
+        let body = '';
 
         req.on('data', function (data) {
             body += data;
@@ -89,7 +130,71 @@ var server = http.createServer(function (req, res) {
                 res.end();
             } else {
                 res.writeHead(403);
-                res.end('bad request : wrong credentials');
+                res.end('bad request : wrong credentials ' + shiftRand());
+            }
+        });
+    }
+
+    else if (req.url == '/basic_auth_fail') {
+        let authString = "Basic : " + new Buffer(fieldsFail.username + ":" + fieldsFail.password).toString('base64');
+        if (req.headers.authorization !== authString) {
+            res.statusCode = 401;
+            res.setHeader('WWW-Authenticate', 'Basic realm="example"');
+            res.end('Access denied');
+        } else {
+            res.statusCode = 200;
+            res.end('Access granted');
+        }
+    }
+
+    // a page protected by an html login form
+    else if (req.url == '/loginFormFailed') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8000' + fieldsFail.action + '" method="POST">' +
+            '<input value="submit"/></form>');
+    }
+
+    else if (req.url == '/firstRequestBug') {
+        sessionHelper.manageSession(req, res);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('<form action="http://localhost:8001/"><input type="text" name="username"/><input type="password" name="password"/>' +
+            '<button type="submit" value="submit"/></form>');
+    }
+
+    // action url of login form.
+    // Returns 302 if 'user', 'password', and sessid cookie match.
+    // Returns 403 else.
+    else if (req.url == '/connectFailed') {
+        sessionHelper.manageSession(req, res);
+
+        // user must have a valid existing sessid to connect
+        if (!sessionHelper.isValidSession(req)) {
+            res.writeHead(403);
+            res.end('bad request : invalid sessid');
+            return;
+        }
+
+        let body = '';
+
+        req.on('data', function (data) {
+            body += data;
+
+            // Prevent malicious flooding
+            if (body.length > 1e6) req.connection.destroy();
+        });
+
+        req.on('end', function () {
+            var post = qs.parse(body);
+            if (post.password == fieldsFail.password && post.username == fieldsFail.username) {
+                res.writeHead(302, { 'Location': '/content' });
+                sessionHelper.connectSession(req);
+                res.end();
+            } else {
+                res.writeHead(403);
+                res.end('bad request : wrong credentials ' + shiftRand());
             }
         });
     }
@@ -115,12 +220,12 @@ describe('checks/server/check_bruteforce.js', function () {
         server.listen(8000);
     });
 
-    it('basic auth works', function (done) {
+    it.only('basic auth works', function (done) {
         this.timeout(2000);
 
-        let check1 = new CheckBruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
+        let check = new CheckBruteforce(new Target('http://localhost:8000/basic_auth', CONSTANTS.TARGETTYPE.SERVER));
 
-        check1.check(new CancellationToken()).then(() => {
+        check.check(new CancellationToken()).then(() => {
             done(new Error("expected issue was not raised"));
         }).catch((issues) => {
             if (issues && issues.length > 0 &&
@@ -134,27 +239,88 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
-    it('form auth works', function (done) {
+    it.only('basic auth does not work', function (done) {
+        this.timeout(2000);
+
+        let check = new CheckBruteforce(new Target('http://localhost:8000/basic_auth_fail', CONSTANTS.TARGETTYPE.SERVER));
+
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('form auth works', function (done) {
+        this.timeout(10000);
+        var check = new CheckBruteforce(new Target('http://localhost:8000/loginForm', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done(new Error("expected issue was not raised"));
+        }).catch((issues) => {
+            if (issues && issues.length > 0 &&
+                issues[0].errorContent &&
+                issues[0].errorContent.indexOf(fields.username) !== -1 &&
+                issues[0].errorContent.indexOf(fields.password) !== -1) {
+                done();
+            }
+            else
+                done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('form auth does not work', function (done) {
         this.timeout(10000);
 
-        var ct = new CancellationToken();
-
-        var check1 = new CheckBruteforce(new Target('http://localhost:8000/loginForm', CONSTANTS.TARGETTYPE.SERVER));
-        check1.check(ct).then(() => {
-            done(new Error("expected issue was not raised"));
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/loginFormFailed', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(new CancellationToken()).then(() => {
+            done();
         }).catch((issues) => {
-            if (issues && issues.length > 0 &&
-                issues[0].errorContent &&
-                issues[0].errorContent.indexOf(fields.username) !== -1 &&
-                issues[0].errorContent.indexOf(fields.password) !== -1) {
-                done();
-            }
-            else
-                done(new Error("expected issue was not raised"));
+            done(new Error("expected issue was not raised"));
         });
     });
 
-    it('is cancellable', function (done) {
+    it.only('First request bug', function (done) {
+        this.timeout(10000);
+
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/firstRequestBug', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('not a login form', function (done) {
+        this.timeout(10000);
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/notloginForm', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('no formaction', function (done) {
+        this.timeout(10000);
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/no_button_formaction', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('is not html', function (done) {
+        this.timeout(10000);
+        var check1 = new CheckBruteforce(new Target('http://localhost:8000/empty', CONSTANTS.TARGETTYPE.SERVER));
+        check1.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
+    it.only('is cancellable', function (done) {
         this.timeout(2000);
         var ct = new CancellationToken();
 

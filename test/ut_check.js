@@ -22,7 +22,7 @@ var CancellationToken = require('../src/cancellationToken.js');
 
 describe('Check class', function () {
     it('does not raise issue on empty check', function (done) {
-        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
+        var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true, false);
 
         var ct = new CancellationToken();
         c.check(ct).catch(() => {

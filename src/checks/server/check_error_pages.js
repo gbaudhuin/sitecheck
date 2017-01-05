@@ -83,18 +83,17 @@ const VERSION_REGEX = [
 ];
 
 
-module.exports = class CheckHeaders extends Check {
+module.exports = class CheckErrorPages extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
-    _check(cancellationToken) {
+    _check(cancellationToken, done) {
         var self = this;
         var timeout = 3000;
-        return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
                 if (err && err.cancelled) {
-                    reject(err);
+                    done(err);
                     return;
                 }
                 for (let reg in VERSION_REGEX) {
@@ -114,8 +113,7 @@ module.exports = class CheckHeaders extends Check {
                         }
                     }
                 }
-                resolve();
+                done();
             });
-        });
     }
 };

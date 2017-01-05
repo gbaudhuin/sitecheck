@@ -41,20 +41,20 @@ class InputVector {
      * Returns true if the object maps a login form
      */
     isLoginForm() {
-        if (this.url && this.fields.password) return true;
-        return false;
+        //if (this.url && this.fields.password) return true;
+        for(let fields of this.fields){
+            if(fields.type == "password") return true;
+        }
     }
 
     isSameVector(secondVector) {
         let firstArray = [], secondArray = [];
-        if (secondVector instanceof InputVector) {
                 for (let field of this.fields) {
                     firstArray.push({ 'name': field.name, 'type': field.type });
                 }
                 for (let field of secondVector.fields) {
                     secondArray.push({ 'name': field.name, 'type': field.type });
             }
-        }
         return JSON.stringify(firstArray) === JSON.stringify(secondArray);
     }
 }

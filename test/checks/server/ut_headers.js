@@ -23,6 +23,7 @@ var http = require('http');
 //var winston = require('winston');
 //var randomstring = require("randomstring");
 var CancellationToken = require('../../../src/cancellationToken.js');
+var check_headers = require('../../../src/checks/server/check_headers.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/xframeoptions_ok') {
@@ -42,12 +43,12 @@ var server = http.createServer(function (req, res) {
         setTimeout(function () {
             res.end();
         }, 2000);
-    } else if (req.url == '/cancel') {
+    } else if (req.url == '/cancelled') {
         setTimeout(function () {
             res.end();
         }, 2000);
     } else if (req.url == '/everything_ok') {
-        res.writeHead(200, { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN'});
+        res.writeHead(200, { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN' });
         res.end();
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -60,96 +61,99 @@ describe('checks/server/check_headers.js', function () {
         server.listen(8000);
     });
 
-    it('detects missing X-Frame-Options, X-Content-Type-Options headers', function (done) {
-        this.timeout(2000);
-        var check_headers = require('../../../src/checks/server/check_headers.js');
+    this.timeout(2000);
 
-        var ct = new CancellationToken();
+    //let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
 
-        //let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
-
-        let p1 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p2 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        let p3 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p4 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        let p5 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/everything_ok', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        let p6 = new Promise(function (resolve, reject) {
-            let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_partial', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        Promise.all([p1, p2, p3, p4, p5, p6])
-            .then(() => {
+    it('contains xframeoption header', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
                 done();
-            })
-            .catch(() => {
-                done(new Error('fail'));
-            });
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('does not contains xframeoption header', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('contains xcontenttypeoptions header', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('does not contains xcontenttypeoptions header', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('works', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/everything_ok', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('contains partial xcontenttypeoptions header', function (done) {
+        let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_partial', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
     });
 
     it('is cancellable', function (done) {
-        var check_headers = require('../../../src/checks/server/check_headers.js');
-        var check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
         var ct = new CancellationToken();
-        let p1 = new Promise(function (resolve, reject) {
-            check.check(ct)
-                .then(() => {
-                    reject();
-                })
-                .catch((e) => {
-                    if (e.cancelled) resolve();
-                });
-        });
-        Promise.all([p1])
+        let check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(ct)
             .then(() => {
                 done();
             })
-            .catch(() => {
-                done(new Error('fail'));
+            .catch((e) => {
+                if (e.cancelled) done();
             });
-        ct.cancel();
+            ct.cancel();
     });
     /*
     it('handles connection errors', function (done) {

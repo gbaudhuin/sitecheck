@@ -23,6 +23,7 @@ var http = require('http');
 //var winston = require('winston');
 //var randomstring = require("randomstring");
 var CancellationToken = require('../../../src/cancellationToken.js');
+var check_code_disclosure = require('../../../src/checks/server/check_code_disclosure.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/php_tag') {
@@ -71,110 +72,123 @@ describe('checks/server/check_code_disclosure.js', function () {
         server.listen(8000);
     });
 
-    it('detects code disclosure', function (done) {
-        this.timeout(2000);
-        var check_code_disclosure = require('../../../src/checks/server/check_code_disclosure.js');
+    it('contains php tag', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
 
+    it('contains asp or jsp code tag', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/asp_jsp_code_tag', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('contains aspx code tag', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/aspx_code_tag', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('contains php tag backslash', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag_backslash', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('contains java code', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/java_import', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('works', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/no_problem', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('is not found', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/not_found', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
+    it('is cancellable', function (done) {
         var ct = new CancellationToken();
-        var ct2 = new CancellationToken();
-
-
-        let p1 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p2 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/asp_jsp_code_tag', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        let p3 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/aspx_code_tag', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        let p4 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/php_tag_backslash', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p5 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/java_import', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p6 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/no_problem', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p7 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/not_found', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        let p8 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct2)
-                .then(() => {
-                    reject();
-                })
-                .catch((e) => {
-                    if (e.cancelled) resolve();
-                });
-        });
-
-        let p9 = new Promise(function (resolve, reject) {
-            let check = new check_code_disclosure(new Target('http://localhost:8000/blacklist', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
-        });
-
-        Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
+        let check = new check_code_disclosure(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(ct)
             .then(() => {
                 done();
             })
-            .catch(() => {
-                done(new Error('fail'));
+            .catch((e) => {
+                if (e.cancelled) done();
             });
-            ct2.cancel();
+            ct.cancel();
     });
+
+    it('contains code in blacklist', function (done) {
+        let check = new check_code_disclosure(new Target('http://localhost:8000/blacklist', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
+    });
+
 
     after(function () {
         server.close();

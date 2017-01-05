@@ -111,20 +111,19 @@ const SECURED_DOMAINS = [
     ".caspowa.com",
 ];
 
-module.exports = class CheckHeaders extends Check {
+module.exports = class CheckCrossDomain extends Check {
 
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
-    _check(cancellationToken) {
+    _check(cancellationToken, done) {
         let self = this;
         let timeout = 3000;
         let found = false;
-        return new Promise(function (resolve, reject) {
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
                 if (err && err.cancelled) {
-                    reject(err);
+                    done(err);
                     return;
                 }
                 let $ = cheerio.load(body);
@@ -141,10 +140,10 @@ module.exports = class CheckHeaders extends Check {
                 });
                 if (!found) {
                     self._raiseIssue("warning_cross_domain.xml", null, "There is a script tag which contains potentially insecured Javascript source at url'" + res.request.uri.href + "' this is not recommanded to delegate security to a third party website.", true);
+                    done();
                 }
-                resolve();
+                done();
             });
-        });
     }
 
     extractDomain(url) {

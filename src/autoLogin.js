@@ -16,9 +16,7 @@
  */
 "use strict";
 var isRelativeUrl = require('is-relative-url');
-var winston = require("winston");
 var request = require('../src/requestwrapper.js');
-var CancellationToken = require('./cancellationToken.js');
 var Url = require('url');
 var inputVector = require('./inputVector.js');
 
@@ -59,20 +57,18 @@ class AutoLogin {
         if (absoluteLoginFormUri && isRelativeUrl(absoluteLoginFormUri)) {
             callback(new Error("absoluteLoginFormUri cannot be relative. absoluteLoginFormUri must be absolute."));
         }
+        else {
+            var cookieJar = request.jar();
 
-        var cookieJar = request.jar();
-
-        this.findLoginInputVector(absoluteLoginFormUri, cookieJar, cancellationToken, (err, data) => {
-            if (err) callback(err);
-            else if (!data) {
-                callback(new Error("Could not find a login form. Login operation canceled."));
-            }
-            else {
-                this.logInInputVector(absoluteLoginFormUri, data.inputVector, user, password, data.cookieJar, cancellationToken, callback);
-            }
-        });
-
-        
+            this.findLoginInputVector(absoluteLoginFormUri, cookieJar, cancellationToken, (err, data) => {
+                if (!data) {
+                    callback(new Error("Could not find a login form. Login operation canceled."));
+                }
+                else {
+                    this.logInInputVector(absoluteLoginFormUri, data.inputVector, user, password, data.cookieJar, cancellationToken, callback);
+                }
+            });
+        }
     }
 
     /**
@@ -131,9 +127,6 @@ class AutoLogin {
                 if (iv.url && !iv.url.host) {
                     iv.url = Url.resolve(absoluteLoginFormUri, iv.url);
                 }
-                if (!iv.url) {
-                    iv.url = absoluteLoginFormUri;
-                }
 
                 callback(null, { inputVector: iv, cookieJar: cookieJar });
             } else {
@@ -183,11 +176,9 @@ class AutoLogin {
 
         // create a virgin cookie jar
         // we must be sure to work with an unconnected session
-        var unconnectedCookieJar = request.jar();
-
-        this.findLoginInputVector(absoluteLoginFormUri, unconnectedCookieJar, cancellationToken, (err, data) => {
-            if (err) callback(err);
-            else if (!data) {
+        let unconnectedCookieJar2 = request.jar();
+        this.findLoginInputVector(absoluteLoginFormUri, unconnectedCookieJar2, cancellationToken, (err, data) => {
+            if (!data) {
                 callback(new Error("Could not find a login form. Login operation canceled."));
             }
             else {
@@ -198,7 +189,7 @@ class AutoLogin {
                     form: self.getFormData(inputVector, "z86f4d56e489er89", "ecf6er4f8c5.A6ez4"),
                     jar: data.cookieJar,
                     followRedirect: false // we need to get statusCode before any redirection
-                }
+                };
 
                 let req2 = {
                     method: inputVector.method,
@@ -207,16 +198,19 @@ class AutoLogin {
                     form: self.getFormData(inputVector, "z86f4d56e489er89", ""), // empty password
                     jar: data.cookieJar,
                     followRedirect: false // we need to get statusCode before any redirection
-                }
+                };
 
                 request(req1, (err, res, body) => {
                     if (err) {
+                        console.log(123);
                         callback(err);
                         return;
                     }
 
-                    var ret = [{res, body}];
+                    var ret = [{ res, body }];
+                    console.log(ret);
                     request(req2, (err, res, body) => {
+                        console.log(234);
                         if (!err) {
                             ret.push({ res, body });
 
@@ -234,6 +228,10 @@ class AutoLogin {
                                     }
                                 }
                             }
+                        }
+                        else{
+                            callback(err);
+                            return;
                         }
                         self.failureIndicators = ret; // store result for quick further use
                         callback(null, ret);
@@ -275,7 +273,7 @@ class AutoLogin {
                 for (let failures of failureIndicators) {
                     if (failures.res.statusCode == res.statusCode)
                         statusCodeisDifferent = false;
-                }                
+                }
                 if (statusCodeisDifferent) {
                     callback(null, { user: user, password: password, cookieJar: cookieJar });
                     return;
@@ -285,6 +283,7 @@ class AutoLogin {
                 if (failureIndicators[0].bodyIdenticalBeginningLength) {
                     // If content beginning is different from failure cases beginning, consider we're logged in.
                     let maxLength = Math.min(body.length, failureIndicators[0].bodyIdenticalBeginningLength);
+                    failureIndicators[0].body;
                     for (var i = 0; i < maxLength; i++) {
                         if (failureIndicators[0].body[i] != body[i]) {
                             callback(null, { user: user, password: password, cookieJar: cookieJar });
@@ -297,6 +296,6 @@ class AutoLogin {
             });
         });
     }
-};
+}
 
 module.exports = AutoLogin;

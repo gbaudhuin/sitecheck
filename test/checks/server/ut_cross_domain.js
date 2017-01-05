@@ -53,60 +53,58 @@ describe('checks/server/check_cross_domain.js', function () {
         server.listen(8000);
     });
 
-    it('detects cross domain scripts', function (done) {
-        this.timeout(2000);
-        var check_cross_domain = require('../../../src/checks/server/check_cross_domain.js');
+    var check_cross_domain = require('../../../src/checks/server/check_cross_domain.js');
 
-        var ct = new CancellationToken();
-        var ct2 = new CancellationToken();
-
-
-        let p1 = new Promise(function (resolve, reject) {
-            let check = new check_cross_domain(new Target('http://localhost:8000/cross_domain_script_unsecured', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues)
-                    reject(new Error("unexpected issue(s) raised"));
-                else
-                    resolve();
-            });
+    it('is on an unsecured domain', function (done) {
+        let check = new check_cross_domain(new Target('http://localhost:8000/cross_domain_script_unsecured', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
         });
+    });
 
-        let p2 = new Promise(function (resolve, reject) {
-            let check = new check_cross_domain(new Target('http://localhost:8000/cross_domain_script_secured', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
+    it('is on an secured domain', function (done) {
+        let check = new check_cross_domain(new Target('http://localhost:8000/cross_domain_script_secured', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
         });
+    });
 
-        let p3 = new Promise(function (resolve, reject) {
-            let check = new check_cross_domain(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct2)
-                .then(() => {
-                    reject();
-                })
-                .catch((e) => {
-                    if (e.cancelled) resolve();
-                });
-        });
-
-        let p4 = new Promise(function (resolve, reject) {
-            let check = new check_cross_domain(new Target('http://localhost:8000/no_script', CONSTANTS.TARGETTYPE.SERVER));
-            check.check(ct).then((issues) => {
-                if (!issues) reject(new Error("expected issue not raised"));
-                else resolve();
-            });
-        });
-
-        Promise.all([p1, p2, p3, p4])
+    it('is cancellable', function (done) {
+        let ct = new CancellationToken();
+        let check = new check_cross_domain(new Target('http://localhost:8000/cancelled', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(ct)
             .then(() => {
                 done();
             })
             .catch((e) => {
-                console.log(e);
-                done(new Error('fail'));
+                if (e.cancelled) done();
             });
-            ct2.cancel();
+        ct.cancel();
+    });
+
+    it('is on an secured domain', function (done) {
+        let check = new check_cross_domain(new Target('http://localhost:8000/no_script', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            if (issues && issues.length > 0 && issues[0].errorContent) {
+                done();
+            } else {
+                done(new Error("unexpected issue(s) raised"));
+            }
+        });
     });
 
     after(function () {

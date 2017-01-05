@@ -18,7 +18,7 @@
 'use strict';
 var http = require('http');
 var qs = require('querystring');
-var tough = require('tough-cookie');
+//var tough = require('tough-cookie');
 var Promise = require('bluebird');
 
 var helpers = require('../../../src/helpers.js');
@@ -166,12 +166,12 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it('passes csrf protected forms', (done) => {
+    it.only('passes csrf protected forms', (done) => {
         var urls = ['http://localhost:8000/csrf_ok1',
                     'http://localhost:8000/csrf_ok2'];
 
         Promise.each(urls, (item, index, length) => {
-            let target = new Target(item, CONSTANTS.TARGETTYPE.PAGE)
+            let target = new Target(item, CONSTANTS.TARGETTYPE.PAGE);
             let check = new CheckCsrf(target);
             return check.check(ct);
         }).then((value) => {
@@ -181,8 +181,8 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it('detects unprotected forms', (done) => {
-        let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE)
+    it.only('detects unprotected forms', (done) => {
+        let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
             done(new Error("Expected issue not raised"));

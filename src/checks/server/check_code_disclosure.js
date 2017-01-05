@@ -68,37 +68,37 @@ const SOURCE_CODE = [
 
 const BLACKLIST = ['xml', 'xpacket'];
 
-module.exports = class CheckHeaders extends Check {
+module.exports = class CheckCodeDisclosure extends Check {
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
-    _check(cancellationToken) {
+    _check(cancellationToken, done) {
         var self = this;
-        var timeout = 3000;
-        return new Promise(function (resolve, reject) {
+        var timeout = 15000;
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
                 if (err && err.cancelled) {
-                    reject(err);
+                    done(err);
                     return;
                 }
-                for (let reg in SOURCE_CODE) if (SOURCE_CODE.hasOwnProperty(reg)) {
-                    let matched = body.match(new RegExp(SOURCE_CODE[reg].regEx, 'i'));
+                for (let reg of SOURCE_CODE) {
+                    let matched = body.match(new RegExp(reg.regEx, 'i'));
                     if (matched) {
                         for (let blacklist_item in BLACKLIST) {
                             if (matched[0].indexOf(blacklist_item) === -1) {
                                 if (res.statusCode === 404) {
-                                    self._raiseIssue("code_disclosure.xml", null, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
+                                    self._raiseIssue("code_disclosure.xml", self.target.uri, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
+                                    done();
                                 }
                                 else {
-                                    self._raiseIssue("code_disclosure.xml", null, SOURCE_CODE[reg].language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                                    self._raiseIssue("code_disclosure.xml", self.target.uri, reg.language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                                    done();
                                 }
                             }
                         }
                     }
                 }
-                resolve();
+                done();
             });
-        });
     }
 };

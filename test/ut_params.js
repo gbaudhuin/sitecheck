@@ -20,9 +20,9 @@ var winston = require('winston');
 var fs = require('fs-extra');
 var Params = require('../src/params.js');
 /**
-* Test src/params.js
+* Test src/Params.js
 */
-describe('params.js', function () {
+describe('Params.js', function () {
     it('doesn\'t raise exceptions', function () {
         var exceptionRaised = false;
         try {
@@ -44,11 +44,9 @@ describe('params.js', function () {
         /*
         */
         it('verify check names correctly', function (done) {
-            let params = new Params();
-
             // invalid check name
             var p = { url: "http://www.example.com", checks: ["headers", "b*"], log: true }; // log=true because winston.stream needs a file transport to work
-            params.gatherScanParams(p);
+            Params.gatherScanParams(p);
 
             var winston_stream = winston.stream({ start: -1 });
             winston_stream.on('log', function (log) {
@@ -61,15 +59,14 @@ describe('params.js', function () {
         });
 
         it('generates log directory if it does not exist', function (done) {
-            var scanParams = require('../src/app.js').gatherScanParams;
             // remove unit tests logs 
             try {
                 fs.removeSync('./log');
             } catch (err) { }
             // invalid check name
-            var params = { url: "http://www.example.com", checks: ["headers", "b*"], log: true };
-            var opts = scanParams(params);
-
+            var p = { url: "http://www.example.com", checks: ["headers", "b*"], log: true };
+            var opts = Params.gatherScanParams(p);
+            console.log(Params);
             var winston_stream = winston.stream({ start: -1 });
             winston_stream.on('log', function (log) {
                 // at this point the file is supposed to created
@@ -81,83 +78,81 @@ describe('params.js', function () {
         });
 
         it('converts single check to array', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
-
+            
             // single check name as string
-            var params = { url: "http://www.example.com", checks: "headers" };
-            var opts = scanParams(params);
+            var p = { url: "http://www.example.com", checks: "headers" };
+            var opts = Params.gatherScanParams(p);
 
             assert(Array.isArray(opts.checks)); // string must be converted to array
         });
 
-        it('throw error when no checks', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
+        it('throw error when no checks', function () { 
 
             // single check name as string
-            var params = { url: "http://www.example.com", checks: null };
+            var p = { url: "http://www.example.com", checks: null };
             assert.throws(function () {
-                scanParams(params);
+                Params.gatherScanParams(p);
             }, Error, "Error thrown");
 
             // checks are an object
-            params = { url: "http://www.example.com", checks: {} };
+            Params = { url: "http://www.example.com", checks: {} };
             assert.throws(function () {
-                scanParams(params);
+                Params.gatherScanParams(p);
             }, Error, "Error thrown");
 
             // empty checks array
-            params = { url: "http://www.example.com", checks: [] };
+            Params = { url: "http://www.example.com", checks: [] };
             assert.throws(function () {
-                scanParams(params);
+                Params.gatherScanParams(p);
             }, Error, "Error thrown");
         });
 
         it('rejects inexistant checks', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
+            
 
             // single check name as string
-            var params = {
+            var p = {
                 url: "http://www.example.com", checks: ["headers", "inexistant"]
             };
-            var opts = scanParams(params);
+            var opts = Params.gatherScanParams(p);
 
             assert(opts.checks.length == 1);
         });
 
         it('parses url param correctly', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
+            
 
-            // 1st case : no url in config, no url in params
-            var params = { url: null, checks: ["headers"] };
+            // 1st case : no url in config, no url in Params
+            var p = { url: null, checks: ["headers"] };
             assert.throws(function () {
-                scanParams(params);
+                Params.gatherScanParams(p);
             }, Error, "Error thrown");
 
-            // 2nd case : no url in config, url in params
+            // 2nd case : no url in config, url in Params
             try {
                 winston.remove(winston.transports.File); // reset winston transports
             } catch (err) { }
-            params = { url: "http://www.example.com", checks: ["headers"] };
-            var opts = scanParams(params);
+            p = { url: "http://www.example.com", checks: ["headers"] };
+            var opts = Params.gatherScanParams(p);
             assert.equal("http://www.example.com", opts.url);
 
-            // 3rd case : url in config, no url in params
+            // 3rd case : url in config, no url in Params
             try {
                 winston.remove(winston.transports.File); // reset winston transports
             } catch (err) { }
             var configfile = __dirname + "/ut_data/.sitecheckrc1";
-            params = { checks: ["headers"], config: configfile };
-            opts = scanParams(params);
+            p = { checks: ["headers"], config: configfile };
+            opts = Params.gatherScanParams(p);
             var json = JSON.parse(fs.readFileSync(configfile));
             assert.equal(json.url, opts.url);
 
-            // 4th case : url in config and in params : should use the one in params
+            // 4th case : url in config and in Params : should use the one in Params
             try {
                 winston.remove(winston.transports.File); // reset winston transports
             } catch (err) { }
             configfile = __dirname + "/ut_data/.sitecheckrc1";
-            params = { url: "http://www.example.com", checks: ["headers"], config: configfile };
-            opts = scanParams(params);
+            p = { url: "http://www.example.com", checks: ["headers"], config: configfile };
+            opts = Params.gatherScanParams(p);
             assert.equal("http://www.example.com", opts.url);
 
             // invalid url
@@ -165,23 +160,23 @@ describe('params.js', function () {
                 winston.remove(winston.transports.File); // reset winston transports
             } catch (err) { }
             configfile = __dirname + "/ut_data/.sitecheckrc1";
-            params = { url: "http:/*www.example.com", checks: ["headers"], config: configfile };
+            p = { url: "http:/*www.example.com", checks: ["headers"], config: configfile };
             assert.throws(function () {
-                scanParams(params);
+                Params.gatherScanParams(p);
             }, Error, "Invalid url");
         });
 
         it('works without log file', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
-            var params = { url: "http://www.example.com", checks: ["headers"], log: false };
-            var opts = scanParams(params);
+            
+            var p = { url: "http://www.example.com", checks: ["headers"], log: false };
+            var opts = Params.gatherScanParams(p);
             assert.equal("http://www.example.com", opts.url);
         });
 
         it('handles invalid log level', function () {
-            var scanParams = require('../src/app.js').gatherScanParams;
-            var params = { url: "http://www.example.com", checks: ["headers"], log: true, loglevel: "zcee64c" };
-            var opts = scanParams(params);
+            
+            var p = { url: "http://www.example.com", checks: ["headers"], log: true, loglevel: "zcee64c" };
+            var opts = Params.gatherScanParams(p);
             assert.equal("debug", opts.loglevel);
         });
 
