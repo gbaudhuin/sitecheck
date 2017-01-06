@@ -407,6 +407,7 @@ module.exports = class CheckBruteforce extends Check {
                     else callback1(err, false);
                 });
             }, function (err, result) {
+                /* istanbul ignore else */
                 if (result) {
                     found_password = result;
                     self._raiseIssue("BruteForce_FormAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);

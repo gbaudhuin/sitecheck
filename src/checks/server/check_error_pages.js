@@ -91,29 +91,29 @@ module.exports = class CheckErrorPages extends Check {
     _check(cancellationToken, done) {
         var self = this;
         var timeout = 3000;
-            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
-                if (err && err.cancelled) {
-                    done(err);
-                    return;
-                }
-                for (let reg in VERSION_REGEX) {
-                    if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
-                        let matched = body.match(new RegExp(VERSION_REGEX[reg].regEx, 'i'));
-                        if (matched) {
-                            if(res.headers.server)
+        request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
+            if (err) {
+                done(err);
+                return;
+            }
+            for (let reg in VERSION_REGEX) {
+                if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
+                    let matched = body.match(new RegExp(VERSION_REGEX[reg].regEx, 'i'));
+                    if (matched) {
+                        if (res.headers.server)
                             self._raiseIssue("error_pages.xml", null, VERSION_REGEX[reg].server + " server found with version '" + res.headers.server + "' at Url '" + res.request.uri.href + "'", true);
-                        }
                     }
                 }
+            }
 
-                for (let error in ERROR_PAGES) {
-                    if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
-                        if (body.indexOf(ERROR_PAGES[error]) !== -1) {
-                            self._raiseIssue("error_pages.xml", null, "Descriptive error page found at Url '" + res.request.uri.href + "'", true);
-                        }
+            for (let error in ERROR_PAGES) {
+                if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
+                    if (body.indexOf(ERROR_PAGES[error]) !== -1) {
+                        self._raiseIssue("error_pages.xml", null, "Descriptive error page found at Url '" + res.request.uri.href + "'", true);
                     }
                 }
-                done();
-            });
+            }
+            done();
+        });
     }
 };
