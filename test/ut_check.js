@@ -25,7 +25,7 @@ var target = new Target("http://localhost:8000", "scanid", CONSTANTS.TARGETTYPE.
 describe('Check class', function () {
     it('ensures a target is passed', function () {
         assert.throws(function () {
-            var c = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
+            new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, false, true);
         });
     });
 

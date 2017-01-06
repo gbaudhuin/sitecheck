@@ -16,8 +16,6 @@
  */
 "use strict";
 var assert = require('assert');
-var winston = require('winston');
-var fs = require('fs-extra');
 
 /**
 * Test src/app.js

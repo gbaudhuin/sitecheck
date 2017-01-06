@@ -28,7 +28,7 @@ winston.add(winston.transports.Console, {
 });
 
 var targets = [];
-var checkMap = new Map();
+//var checkMap = new Map();
 
 /**
  * Main function.
@@ -59,8 +59,8 @@ function scan(opts) {
 }
 
 function checkTarget(target, params, cancellationToken) {
-    var running_checks = [];
-   /* for (let checkName of params.checks) {
+    /* var running_checks = [];
+    for (let checkName of params.checks) {
         var Check = require(checkMap[checkName]);
         var check = new Check(target);
         if (check.targetType == target.targetType) {

@@ -158,7 +158,6 @@ module.exports = class CheckCSRF extends Check {
 
                                 let formData = {};
                                 var actionUrl = url.resolve(self.target.uri, iv.url);
-                                var randomText = Math.random().toString(10).substr(2);
                                 for (let field of iv.fields) {
                                     if (field.name) {
                                         if (field.value) {
@@ -201,7 +200,6 @@ module.exports = class CheckCSRF extends Check {
 
                                 // TODO :
                                 // - envoyer un referer dans les requetes pour passer sur les sites qui filtrent
-                                // - test unitaire sur les csrf token qui ne changent pas entre les versions
                                 //
                                 // En dehors de check_csrf
                                 // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
