@@ -92,7 +92,7 @@ var server = http.createServer(function (req, res) {
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end('<html><body>' +
                 '<form action="/abcd">' +
-                    '<input type="text" name="comment"/>' +
+                '<input type="text" name="comment"/>' +
                 '<input type="submit" value="submit"/><input type="hidden" name="' + fields.csrf + '" value="' + csrfToken + '"/> ' +
                 '</form>' +
                 '</body></html>');
@@ -102,11 +102,12 @@ var server = http.createServer(function (req, res) {
         }
     } else if (req.url == '/csrf_ok2') {
         // A page with 1 or 2 forms. The second one only appears when connected
+        // Form enctype is "multipart/form-data"
 
         if (sessionHelper.isValidSession(req)) {
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end('<html><body>' +
-                '<form action="/abcd">' +
+                '<form action="/abcd" enctype="multipart/form-data">' +
                 '<input type="text" name="comment"/>' +
                 '<input type="submit" value="submit"/><input type="hidden" name="' + fields.csrf + '" value="' + csrfToken + '"/> ' +
                 '</form>' +
@@ -126,6 +127,90 @@ var server = http.createServer(function (req, res) {
             res.end('<html><body>' +
                 '<form action="/abcd">' +
                 '<input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="blabla" value="blabla"/> ' +
+                '</form>' +
+                '</body></html>');
+        } else {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end('restricted access');
+        }
+    } else if (req.url == '/constantToken') {
+        // A form only accessible in connected mode, with a constant token
+
+        var constantCsrfToken = "ojiod5ef894e9:dzsfzf5f4";
+
+        if (sessionHelper.isValidSession(req)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body>' +
+                '<form action="/abcd" enctype="multipart/form-data">' +
+                '<input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="blabla" value="blabla"/> ' +
+                '<input type="hidden" name="csrf" value="' + constantCsrfToken + '"/> ' +
+                '</form>' +
+                '</body></html>');
+        } else {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end('restricted access');
+        }
+    } else if (req.url == '/uncheckedToken') {
+        // A page only accessible in connected mode. Form's action url does not check token validity
+
+        if (sessionHelper.isValidSession(req)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body>' +
+                '<form action="/actionpage">' +
+                '<input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="' + fields.csrf + '" value="' + csrfToken + '"/> ' +
+                '</form>' +
+                '</body></html>');
+        } else {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end('restricted access');
+        }
+    } else if (req.url == '/actionpage') {
+        // An action page that does not check csrf token
+
+        res.writeHead(302, { "Content-Type": "text/html" });
+        res.end('<html><body>' +
+            '<div>hello</div>' +
+            '</body></html>');
+    } else if (req.url == '/formless') {
+        // A page with no form
+
+        if (sessionHelper.isValidSession(req)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body>' +
+                '<div>hello</div>' +
+                '</body></html>');
+        } else {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end('restricted access');
+        }
+    } else if (req.url == '/falsepositive') {
+        // A well known false positive ajax form
+
+        if (sessionHelper.isValidSession(req)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body>' +
+                '<form action="/abcd">' +
+                '<input type="text" name="stripe-card-number"/>' +  // Stripe-like form
+                '<input type="text" name="comment"/>' +
+                '<input type="submit" value="submit"/><input type="hidden" name="blabla" value="blabla"/> ' +
+                '</form>' +
+                '</body></html>');
+        } else {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end('restricted access');
+        }
+    } else if (req.url == '/unreachableaction') {
+        // A form with an unreachable action url
+
+        if (sessionHelper.isValidSession(req)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end('<html><body>' +
+                '<form action="http://zz9e79ge7t9g78e89eg486erg86erg8.com">' +
+                '<input type="text" name="comment"/>' +
+                '<input type="hidden" name="' + fields.csrf + '" value="' + csrfToken + '"/>' +
                 '<input type="submit" value="submit"/><input type="hidden" name="blabla" value="blabla"/> ' +
                 '</form>' +
                 '</body></html>');
@@ -181,13 +266,77 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
-    it.skip('detects unprotected forms', (done) => {
+    it('detects unprotected forms', (done) => {
         let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done(new Error("Expected issue not raised"));
+        }).catch((value) => {
+            done();
+        });
+    });
+
+    it('detects unchecked cross session tokens', (done) => {
+        let target = new Target('http://localhost:8000/uncheckedToken', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done(new Error("Expected issue not raised"));
+        }).catch((value) => {
+            done();
+        });
+    });
+
+    it('detects constant csrf tokens', (done) => {
+        let target = new Target('http://localhost:8000/constantToken', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done(new Error("Expected issue not raised"));
+        }).catch((value) => {
+            if (value && value.length && value[0].errorContent.indexOf("same accross") !== -1) {
+                done();
+            } else {
+                done(new Error("Unexpected error"));
+            }
+        });
+    });
+
+    it('passes form-less pages', (done) => {
+        let target = new Target('http://localhost:8000/formless', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
             done();
         }).catch((value) => {
-            done(new Error("Expected issue not raised"));
+            done(new Error("Unexpected issue raised"));
+        });
+    });
+
+    it('passes unreachable pages', (done) => {
+        let target = new Target('http://localhost:8001/unreachable', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done(new Error("Expected error not raised"));
+        }).catch((value) => {
+            done();
+        });
+    });
+
+    it('passes false positives', (done) => {
+        let target = new Target('http://localhost:8000/falsepositive', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done();
+        }).catch((value) => {
+            done(new Error("Unexpected issue raised"));
+        });
+    });
+
+    it('passes a form with an unreachable action url', (done) => {
+        let target = new Target('http://localhost:8000/unreachableaction', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.check(ct).then((value) => {
+            done(new Error("Expected error not raised"));
+        }).catch((value) => {
+            done();
         });
     });
 
@@ -226,7 +375,7 @@ describe('checks/server/check_csrf.js', function () {
         // get a connected session
         autoLogin.login(params.loginPage, params.user, params.password, ct, (err, data) => {
             if (err) {
-                done(new Error("login failed."));
+                done(err);
             } else {
                 if (!data) done(new Error("No data"));
                 if (!data.cookieJar) done(new Error("No data.cookieJar"));

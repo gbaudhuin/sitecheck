@@ -24,13 +24,15 @@ var fs = require('fs-extra');
 */
 describe('app.js', function () {
     it('doesn\'t raise exceptions', function () {
-        var exceptionRaised = false;
-        try {
+        assert.doesNotThrow(() => {
             require('../src/app.js');
-        } catch (err) {
-            exceptionRaised = true;
-        }
+        });
+    });
 
-        assert.equal(exceptionRaised, false);
+    it('can start a scan', function () {
+        assert.doesNotThrow(() => {
+            let app = require('../src/app.js');
+            app.scan({ url: "http://www.example.com", checks: ["headers"], log: true });
+        });
     });
 });

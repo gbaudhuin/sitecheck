@@ -20,6 +20,7 @@ var fs = require("fs");
 var valid_url = require("valid-url");
 var winston = require("winston");
 const url = require('url');
+
 var checkMap = new Map();
 
 function Params() {
@@ -112,8 +113,8 @@ function Params() {
             this.logFile = logfilename;
         }
 
-        /* istanbul ignore next */ // complex and useless to test
         this.silent = opts.silent;
+        /* istanbul ignore next */ // complex and useless to test
         if (this.silent) {
             winston.remove(winston.transports.Console);
         }

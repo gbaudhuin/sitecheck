@@ -53,15 +53,15 @@ function scan(opts) {
 
     var ct = new CancellationToken();
 
-    for (let target of params) {
+    for (let target of targets) {
         checkTarget(target, params, ct);
     }
 }
 
 function checkTarget(target, params, cancellationToken) {
     var running_checks = [];
-    for (let checkName of params.checks) {
-        var Check = require(checkMap(checkName));
+   /* for (let checkName of params.checks) {
+        var Check = require(checkMap[checkName]);
         var check = new Check(target);
         if (check.targetType == target.targetType) {
             running_checks.push(check.check(cancellationToken));
@@ -74,7 +74,7 @@ function checkTarget(target, params, cancellationToken) {
 
     }).catch((err) => {
 
-    });
+    });*/
 }
 
 module.exports = { scan: scan };

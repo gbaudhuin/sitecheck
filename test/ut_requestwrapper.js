@@ -88,6 +88,32 @@ describe('requestwrapper.js', function () {
         });
     });
 
+    it('verifies HEAD method correctly', function () {
+        assert.throws(() => {
+            request.head({ url: "http://localhost:8000", body: "blabla", timeout: 1000 }, function (err, res, body) {
+
+            });
+        });
+
+        assert.throws(() => {
+            request.head({ url: "http://localhost:8000", requestBodyStream: "blabla", timeout: 1000 }, function (err, res, body) {
+
+            });
+        });
+
+        assert.throws(() => {
+            request.head({ url: "http://localhost:8000", json: { a: "blabla" }, timeout: 1000 }, function (err, res, body) {
+
+            });
+        });
+
+        assert.throws(() => {
+            request.head({ url: "http://localhost:8000", multipart: "blabla", timeout: 1000 }, function (err, res, body) {
+
+            });
+        });
+    });
+
     after(function () {
         server.close();
     });

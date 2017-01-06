@@ -65,13 +65,7 @@ module.exports = class CheckCSRF extends Check {
         // access url with a connected user
         request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: request.sessionJar }, (err, res, body) => {
             if (err) {
-                self._raiseIssue("warning_csrf.xml", null, "Url '" + self.target.uri.href + "' is not reachable", true);
                 done(err);
-                return;
-            }
-
-            if (res.statusCode !== 200) {
-                done(); // nothing to do
                 return;
             }
 
@@ -79,8 +73,8 @@ module.exports = class CheckCSRF extends Check {
             if (self.ivs.length > 0) {
                 // access url with an unconnected user
                 request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: null }, (err, res, body) => {
+                    /* istanbul ignore if */
                     if (err) {
-                        self._raiseIssue("warning_csrf.xml", null, "Url '" + self.target.uri.href + "' is not reachable", true);
                         done(err);
                         return;
                     }
@@ -96,7 +90,7 @@ module.exports = class CheckCSRF extends Check {
 
                         // add form to elligible forms array "arrayOfConnectedOnlyForms"
                         if (!found) {
-                            // filter out false positives with known relevant strings stored in falsePositives array.
+                            // filter out false positives with known field names
                             // note : this method is weak and should be enhanced. An evolution would be to use phantomJs to execute js and be able to work with handlers, as explained next.
                             let falsePositive = false;
                             for (let f of formConnected.fields) {
@@ -123,11 +117,13 @@ module.exports = class CheckCSRF extends Check {
                     // Now, we check if anti-csrf tokens are correctly generated and checked
                     // Inspired by https://blog.qualys.com/securitylabs/2015/01/14/do-your-anti-csrf-tokens-really-protect-your-applications-from-csrf-attack
                     self.getAnotherToken(cancellationToken, (ivs2) => {
+                        /* istanbul ignore if */
                         if (typeof ivs2 === Error) {
                             done(ivs2);
                             return;
                         }
 
+                        /* istanbul ignore else */
                         if (ivs2 && ivs2.length > 0) {
                             let goodCouples = [];
                             for (let iv1 of self.ivs) {
@@ -138,6 +134,7 @@ module.exports = class CheckCSRF extends Check {
                                         if (iv1.isSameVector(iv2)) {
                                             let csrfField2 = self.getCsrfField(iv2);
 
+                                            /* istanbul ignore else */
                                             if (csrfField2) {
                                                 if (csrfField1.value === csrfField2.value) {
                                                     // tokens are the same accross sessions
@@ -256,7 +253,6 @@ module.exports = class CheckCSRF extends Check {
 
             request.get({ url: self.target.uri, timeout: 10000, cancellationToken: cancellationToken, jar: data.cookieJar }, (err, res, body) => {
                 if (err) {
-                    self._raiseIssue("warning_csrf.xml", null, "Url '" + self.target.uri.href + "' is not reachable", true);
                     callback(err);
                     return;
                 }

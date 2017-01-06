@@ -88,6 +88,8 @@ class AutoLogin {
                     let fieldTypeLower = '';
                     if (field.name) fieldNameLower = field.name.toLowerCase();
                     if (field.type) fieldTypeLower = field.type.toLowerCase();
+                    else fieldTypeLower = "text";// default html input type
+
                     // note : html default input type is "text" : if no type attribute is found, consider a text field.
                     if ((fieldTypeLower === "" || fieldTypeLower == "text" || fieldTypeLower == "email") && (fieldNameLower.indexOf("user") !== -1 || fieldNameLower.indexOf("name") !== -1 || fieldNameLower.indexOf("mail") !== -1 || fieldNameLower.indexOf("key") !== -1 || typicalUserFields.includes(fieldNameLower))) {
                         iv.userField = field.name;
@@ -124,8 +126,13 @@ class AutoLogin {
             let iv = self.findLoginInputVectorInContent(body);
             if (iv) {
                 // make sure action url is absolute
-                if (iv.url && !iv.url.host) {
-                    iv.url = Url.resolve(absoluteLoginFormUri, iv.url);
+                if (!iv.url) {
+                    iv.url = absoluteLoginFormUri;
+                } else {
+                    let u = Url.parse(iv.url);
+                    if (!u.host) {
+                        iv.url = Url.resolve(absoluteLoginFormUri, iv.url);
+                    }
                 }
 
                 callback(null, { inputVector: iv, cookieJar: cookieJar });

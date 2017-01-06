@@ -45,10 +45,6 @@ function paramsHaveRequestBody(params) {
 }
 
 function request(uri, options, callback) {
-    if (typeof uri === 'undefined') {
-        throw new Error('undefined is not a valid uri or options object.');
-    }
-
     var params = request_orig.initParams(uri, options, callback);
     params.starttime = process.hrtime();
     // override callback so we can log

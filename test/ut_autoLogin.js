@@ -90,7 +90,7 @@ var server = http.createServer(function (req, res) {
 
         let contents = fs.readFileSync(__dirname + "/ut_data/ut_autoLogin/formlogin.html", 'utf8');
 
-        contents = contents.replace(/{{action_field}}/g, 'connectFail');
+        contents = contents.replace(/{{action_field}}/g, 'http://localhost:8000/connectFail');
         contents = contents.replace(/{{username_field}}/g, fields.user);
         contents = contents.replace(/{{password_field}}/g, fields.password);
         contents = contents.replace(/{{csrf_field}}/g, fields.csrf);
@@ -120,7 +120,7 @@ var server = http.createServer(function (req, res) {
 
         let contents = fs.readFileSync(__dirname + "/ut_data/ut_autoLogin/formlogin.html", 'utf8');
 
-        contents = contents.replace(/{{action_field}}/g, 'crashWhenNoPassword');
+        contents = contents.replace(/{{action_field}}/g, 'http://localhost:8000/crashWhenNoPassword');
         contents = contents.replace(/{{username_field}}/g, fields.user);
         contents = contents.replace(/{{password_field}}/g, fields.password);
         contents = contents.replace(/{{csrf_field}}/g, fields.csrf);
