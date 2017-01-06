@@ -356,7 +356,10 @@ module.exports = class CheckBruteforce extends Check {
                 timeout: 60000,
                 cancellationToken: cancellationToken
             }, (err, res, body) => {
-                if (res.statusCode === 200) {
+                /* istanbul ignore if */
+                if (err) {
+                    cb(err, false);
+                } else if (res.statusCode === 200) {
                     cb(null, true);
                 } else {
                     cb(null, false);
@@ -368,7 +371,7 @@ module.exports = class CheckBruteforce extends Check {
                 self._raiseIssue("BruteForce_BasicAuth.xml", self.target.uri, "User was set to '" + found_user + "' and password to '" + found_password + "'.", false);
             }
 
-            callback();
+            callback(err);
         });
     }
 

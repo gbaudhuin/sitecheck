@@ -56,6 +56,18 @@ var server = http.createServer(function (req, res) {
         }
     }
 
+    else if (req.url == '/basic_auth_fail') {
+        let authString = "Basic : " + new Buffer(fieldsFail.username + ":" + fieldsFail.password).toString('base64');
+        if (req.headers.authorization !== authString) {
+            res.statusCode = 401;
+            res.setHeader('WWW-Authenticate', 'Basic realm="example"');
+            res.end('Access denied');
+        } else {
+            res.statusCode = 200;
+            res.end('Access granted');
+        }
+    }
+
     // a page protected by an html login form
     else if (req.url == '/empty') {
         res.writeHead(200, { "Content-Type": "text/html" });
@@ -164,18 +176,6 @@ var server = http.createServer(function (req, res) {
                 res.end('bad request : wrong credentials' + Math.random() * Math.random());
             }
         });
-    }
-
-    else if (req.url == '/basic_auth_fail') {
-        let authString = "Basic : " + new Buffer(fieldsFail.username + ":" + fieldsFail.password).toString('base64');
-        if (req.headers.authorization !== authString) {
-            res.statusCode = 401;
-            res.setHeader('WWW-Authenticate', 'Basic realm="example"');
-            res.end('Access denied');
-        } else {
-            res.statusCode = 200;
-            res.end('Access granted');
-        }
     }
 
     // a page protected by an html login form
