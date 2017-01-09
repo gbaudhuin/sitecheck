@@ -244,12 +244,8 @@ module.exports = class CheckCSRF extends Check {
                 return;
             }
 
-            if (!data) {
-                callback(new Error("getAnotherToken() : No data"));
-                return;
-            }
-
             request.get({ url: self.target.uri, timeout: 10000, cancellationToken: cancellationToken, jar: data.cookieJar }, (err, res, body) => {
+                /* istanbul ignore if */
                 if (err) {
                     callback(err);
                     return;

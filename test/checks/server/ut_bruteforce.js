@@ -262,6 +262,18 @@ describe('checks/server/check_bruteforce.js', function () {
         });
     });
 
+    it('basic auth failed', function (done) {
+        this.timeout(5000);
+
+        let check = new CheckBruteforce(new Target('http://localhost:8000/basic_auth_fail', CONSTANTS.TARGETTYPE.SERVER));
+
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((issues) => {
+            done(new Error("expected issue was not raised"));
+        });
+    });
+
     it('form auth works', function (done) {
         this.timeout(10000);
         var check = new CheckBruteforce(new Target('http://localhost:8000/loginForm', CONSTANTS.TARGETTYPE.SERVER));

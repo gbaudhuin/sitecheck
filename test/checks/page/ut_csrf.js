@@ -30,6 +30,7 @@ var SessionHelper = require('../../helpers/sessionHelper.js');
 var CheckCsrf = require('../../../src/checks/page/check_csrf.js');
 const CONSTANTS = require('../../../src/constants.js');
 var params = require('../../../src/params.js');
+var inputVector = require('../../../src/inputVector.js');
 
 var autoLogin = new AutoLogin();
 var sessionHelper = new SessionHelper();
@@ -42,6 +43,7 @@ var fields = {
     csrf: 'authenticity_token',
     csrf_value: helpers.token()
 };
+
 
 var server = http.createServer(function (req, res) {
     let csrfToken = sessionHelper.getCsrfToken(req, res);
@@ -82,6 +84,12 @@ var server = http.createServer(function (req, res) {
                 res.end('bad request : wrong credentials');
             }
         });
+    } else if (req.url == '/empty_body') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('');
+    } else if (req.url == '/empty_body_2') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end();
     } else if (req.url == '/content') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end('<html><head><body>content<body></head></html>');
@@ -253,7 +261,7 @@ describe('checks/server/check_csrf.js', function () {
 
     it('passes csrf protected forms', (done) => {
         var urls = ['http://localhost:8000/csrf_ok1',
-                    'http://localhost:8000/csrf_ok2'];
+            'http://localhost:8000/csrf_ok2'];
 
         Promise.each(urls, (item, index, length) => {
             let target = new Target(item, CONSTANTS.TARGETTYPE.PAGE);
@@ -340,6 +348,66 @@ describe('checks/server/check_csrf.js', function () {
         });
     });
 
+    it('gets an error when getting another Token', (done) => {
+        let target = new Target('http://localhost:8000/unreachableaction', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        let ct = new cancellationToken();
+        check.getAnotherToken(ct, (err, data) => {
+            if (err) {
+                done();
+            } else {
+                done(new Error("Expected error not raised"));
+            }
+        });
+        ct.cancel();
+    });
+
+    it('tries to access an inexistant URL', (done) => {
+        let target = new Target('http://localhost:8000/not_a_login_url', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.getAnotherToken(ct, (err, data) => {
+            if (err) {
+                done(new Error("Expected error not raised"));
+            } else {
+                done();
+            }
+        });
+    });
+
+    it('is called with empty body', (done) => {
+        let target = new Target('http://localhost:8000/empty_body', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.getAnotherToken(ct, (err, data) => {
+            if (err) {
+                done(new Error("Expected error not raised"));
+            } else {
+                done();
+            }
+        });
+    });
+
+    it('is called with empty inputVector', (done) => {
+        let target = new Target('http://localhost:8000/empty_body', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.getCsrfField(null);
+        done();
+    });
+
+    it('is called with no field in inputVector', (done) => {
+        let target = new Target('http://localhost:8000/empty_body', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.getCsrfField({fields: ''});
+        done();
+    });
+
+    it('is does not have an obvious token name', (done) => {
+        var iv = new inputVector.InputVector('http://localhost:8000/no_token', 'not_obvious', 'get', [{type: 'hidden', name: 'token_not_obvious'}, {type: 'hidden', name: 'token_not_obvious'}], null);
+        let target = new Target('http://localhost:8000/no_token', CONSTANTS.TARGETTYPE.PAGE);
+        let check = new CheckCsrf(target);
+        check.getCsrfField(iv);
+        done();
+    });
+
     it.skip('hacks Concrete5 < v5.7.3.2', (done) => {
         params.loginPage = 'https://progressive-sports.co.uk/login';
         params.user = 'sitecheck.ut@gmail.com';
@@ -393,7 +461,7 @@ describe('checks/server/check_csrf.js', function () {
             }
         });
     });
-    
+
     after(() => {
         server.close();
     });
