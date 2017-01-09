@@ -44,25 +44,25 @@ exports.getCaller = function () {
 
     // get relative path
     let index = 0;
-    while (fileName[index] === dirName[index]) {
+    while (fileName[index] === dirName[index]) { 
         index++;
     }
     fileName = fileName.substring(index);
     let line = s.getLineNumber();
-    return { name: funcName, fileName: fileName, line: line };
-};
+    return { name: funcName, fileName: fileName, line: line};
+}
 
 /**
  * Returns current stack
  */
-exports.getStack = function () {
+exports.getStack = function() {
     // Save original Error.prepareStackTrace
     var origPrepareStackTrace = Error.prepareStackTrace;
 
     // Override with function that just returns `stack`
     Error.prepareStackTrace = function (_, stack) {
         return stack;
-    };
+    }
 
     // Create a new `Error`, which automatically gets `stack`
     var err = new Error();
@@ -77,7 +77,7 @@ exports.getStack = function () {
     stack.shift(); // getStack --> Error
 
     return stack;
-};
+}
 
 /**
  * Gets an array of cookies from a request
