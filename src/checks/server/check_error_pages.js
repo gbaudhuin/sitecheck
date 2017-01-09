@@ -92,8 +92,8 @@ module.exports = class CheckErrorPages extends Check {
         var self = this;
         var timeout = 3000;
         request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
-            if (err) {
-                done(err);
+            if (self._handleError(err)) {
+                done();
                 return;
             }
             for (let reg in VERSION_REGEX) {

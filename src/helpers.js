@@ -32,6 +32,54 @@ exports.token = function() {
 };
 
 /**
+ * Returns caller function triplet { name, fileName, line}
+ */
+exports.getCaller = function () {
+    var stack = exports.getStack();
+
+    let s = stack[1];
+    let funcName = s.getFunctionName() || 'anonymous';
+    let fileName = s.getFileName();
+    let dirName = __dirname;
+
+    // get relative path
+    let index = 0;
+    while (fileName[index] === dirName[index]) { 
+        index++;
+    }
+    fileName = fileName.substring(index);
+    let line = s.getLineNumber();
+    return { name: funcName, fileName: fileName, line: line};
+}
+
+/**
+ * Returns current stack
+ */
+exports.getStack = function() {
+    // Save original Error.prepareStackTrace
+    var origPrepareStackTrace = Error.prepareStackTrace;
+
+    // Override with function that just returns `stack`
+    Error.prepareStackTrace = function (_, stack) {
+        return stack;
+    }
+
+    // Create a new `Error`, which automatically gets `stack`
+    var err = new Error();
+
+    // Evaluate `err.stack`, which calls our new `Error.prepareStackTrace`
+    var stack = err.stack;
+
+    // Restore original `Error.prepareStackTrace`
+    Error.prepareStackTrace = origPrepareStackTrace;
+
+    // Remove superfluous function call on stack
+    stack.shift(); // getStack --> Error
+
+    return stack;
+}
+
+/**
  * Gets an array of cookies from a request
  * The function is not currently used but is working
  */

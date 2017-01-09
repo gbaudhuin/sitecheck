@@ -101,4 +101,9 @@ describe('Check class', function () {
         });
         ct.cancel();
     });
+
+    it("handles errors correctly", function () {
+        var check = new Check(CONSTANTS.TARGETTYPE.NONE, CONSTANTS.CHECKFAMILY.NONE, true, true, target);
+        assert(check._handleError(new Error("Fake error (unit test)")));
+    });
 });
