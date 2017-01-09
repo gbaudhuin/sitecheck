@@ -19,7 +19,6 @@
 let Check = require('../../check');
 let request = require('request');
 var async = require("async");
-var winston = require("winston");
 const CONSTANTS = require("../../constants.js");
 var AutoLogin = require('../../../src/autoLogin.js');
 
