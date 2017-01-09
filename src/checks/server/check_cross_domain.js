@@ -121,29 +121,29 @@ module.exports = class CheckCrossDomain extends Check {
         let self = this;
         let timeout = 3000;
         let found = false;
-            request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
-                if (err && err.cancelled) {
-                    done(err);
-                    return;
-                }
-                let $ = cheerio.load(body);
-                $('script').each(function () {
-                    for (let reg of SECURED_DOMAINS) {
-                        let currentDomain = self.target.uri.hostname;
-                        let matched = $(this).attr('src');
-                        if (matched !== undefined) {
-                            if (matched.indexOf(currentDomain) === -1 && matched.indexOf(reg) !== -1) {
-                                found = true;
-                            }
+        request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
+            if (self._handleError(err)) {
+                done();
+                return;
+            }
+
+            let $ = cheerio.load(body);
+            $('script').each(function () {
+                for (let reg of SECURED_DOMAINS) {
+                    let currentDomain = self.target.uri.hostname;
+                    let matched = $(this).attr('src');
+                    if (matched !== undefined) {
+                        if (matched.indexOf(currentDomain) === -1 && matched.indexOf(reg) !== -1) {
+                            found = true;
                         }
                     }
-                });
-                if (!found) {
-                    self._raiseIssue("warning_cross_domain.xml", null, "There is a script tag which contains potentially insecured Javascript source at url'" + res.request.uri.href + "' this is not recommanded to delegate security to a third party website.", true);
-                    done();
                 }
-                done();
             });
+            if (!found) {
+                self._raiseIssue("warning_cross_domain.xml", null, "There is a script tag which contains potentially insecured Javascript source at url'" + res.request.uri.href + "' this is not recommanded to delegate security to a third party website.", true);
+            }
+            done();
+        });
     }
 
     /*extractDomain(url) {

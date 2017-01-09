@@ -68,15 +68,15 @@
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
     </Compile>
-    <Compile Include="test\ut_auth.js">
-      <TestFramework>Mocha</TestFramework>
-    </Compile>
     <Compile Include="test\ut_autoLogin.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_cancellationToken.js" />
     <Compile Include="test\ut_check.js">
       <SubType>Code</SubType>
+      <TestFramework>Mocha</TestFramework>
+    </Compile>
+    <Compile Include="test\ut_helpers.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\ut_inputVector.js">

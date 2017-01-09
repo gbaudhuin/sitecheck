@@ -77,10 +77,11 @@ module.exports = class CheckCodeDisclosure extends Check {
         var self = this;
         var timeout = 15000;
             request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
-                if (err && err.cancelled) {
-                    done(err);
+                if (self._handleError(err)) {
+                    done();
                     return;
                 }
+
                 for (let reg of SOURCE_CODE) {
                     let matched = body.match(new RegExp(reg.regEx, 'i'));
                     if (matched) {
@@ -89,10 +90,12 @@ module.exports = class CheckCodeDisclosure extends Check {
                                 if (res.statusCode === 404) {
                                     self._raiseIssue("code_disclosure.xml", self.target.uri, "There is a code disclosure in your custom 404 script at '" + res.request.uri.href + "'", true);
                                     done();
+                                    return;
                                 }
                                 else {
                                     self._raiseIssue("code_disclosure.xml", self.target.uri, reg.language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
                                     done();
+                                    return;
                                 }
                             }
                         }

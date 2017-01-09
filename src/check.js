@@ -18,6 +18,8 @@
 const CONSTANTS = require("./constants.js");
 var Issue = require("./issue.js");
 var Promise = require('bluebird');
+var helpers = require('./helpers.js');
+var winston = require('winston');
 
 /**
  * Base class of checks; All checks classes must derive from this class.
@@ -138,6 +140,26 @@ class Check {
      */
     _check(cancellationToken, done) {
         done(new Error("_check(cancellationToken) must be overriden"));
+    }
+
+    /**
+     * Handles check errors. To be used in _check()
+     * Checks should not handle errors directly.
+     * @param err
+     */
+    _handleError(err) {
+        if (!err) {
+            return false;
+        }
+        let caller = helpers.getCaller();
+        if (err.cancelled) {
+            winston.debug(caller + " : cancellation token was triggered");
+        } else {
+            console.log("Error raised in " + caller.fileName + " line " + caller.line + " : " + err.name + "\n" + err.message + "\n" + err.stack);
+            winston.error("Error raised in " + caller.fileName + " line " + caller.line + " : " + err.name + "\n" + err.message + "\n" + err.stack);
+        }
+
+        return true;
     }
 }
 
