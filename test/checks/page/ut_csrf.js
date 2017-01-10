@@ -233,7 +233,7 @@ var server = http.createServer(function (req, res) {
 });
 
 
-describe('checks/server/check_csrf.js', function () {
+describe('checks/page/check_csrf.js', function () {
     this.timeout(50000);
 
     before((done) => {

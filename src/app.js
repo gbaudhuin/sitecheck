@@ -17,6 +17,7 @@
 "use strict";
 
 var winston = require("winston");
+var promise = require("bluebird");
 var Target = require('./target.js');
 var params = require('./params.js');
 var CancellationToken = require('./cancellationToken.js');
@@ -28,7 +29,6 @@ winston.add(winston.transports.Console, {
 });
 
 var targets = [];
-//var checkMap = new Map();
 
 /**
  * Main function.
@@ -41,27 +41,28 @@ var targets = [];
  *                      <li>allPages : true to scan all pages of website. Default is false.</li>
  *                      <li>log : true to activate log to file. Default is false.</li>
  *                      <li>silent : true to prevent console logs. Default is false.</li>
- *                      <li>loglevel : sets log level. Possible values are "error", "warn", "info", "verbose", "debug", "silly". Default is "warn".</li>
+ *                      <li>loglevel : sets log level. Possible values are "error", "warn", " ", "verbose", "debug", "silly". Default is "warn".</li>
  *                  </ul>
  */
 function scan(opts) {
     params.gatherScanParams(opts);
     var scanId = "";
 
-    var t = new Target(params.url, scanId, CONSTANTS.TARGETTYPE.SERVER);
-    targets.push(t);
+    targets.push(new Target(params.url, CONSTANTS.TARGETTYPE.PAGE));
+    targets.push(new Target(params.url, CONSTANTS.TARGETTYPE.SERVER));
 
     var ct = new CancellationToken();
-
     for (let target of targets) {
-        checkTarget(target, params, ct);
+        console.log(target);
+        checkTarget(target, ct);
     }
 }
 
-function checkTarget(target, params, cancellationToken) {
-    /* var running_checks = [];
+function checkTarget(target, cancellationToken) {
+    var running_checks = [];
     for (let checkName of params.checks) {
-        var Check = require(checkMap[checkName]);
+        var fileName = params.checkMap.get(checkName);
+        var Check = require(fileName);
         var check = new Check(target);
         if (check.targetType == target.targetType) {
             running_checks.push(check.check(cancellationToken));
@@ -74,7 +75,7 @@ function checkTarget(target, params, cancellationToken) {
 
     }).catch((err) => {
 
-    });*/
+    });
 }
 
 module.exports = { scan: scan };

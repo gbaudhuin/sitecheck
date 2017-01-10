@@ -21,8 +21,6 @@ var valid_url = require("valid-url");
 var winston = require("winston");
 const url = require('url');
 
-var checkMap = new Map();
-
 function Params() {
     // common options
     this.allPages = false; // if true crawls the entire site. If false, just one page.
@@ -39,6 +37,9 @@ function Params() {
     this.loginPage = "/login";
     this.user = "root";
     this.password = "";
+
+    // map checkName -> js file path
+    this.checkMap = new Map();
 
     /**
      * Build scan parameters from default params + config file + "manual" params
@@ -138,7 +139,7 @@ function Params() {
                         var fullpath = __dirname + "/" + p + "check_" + name + ".js";
                         if (!found && fs.existsSync(fullpath)) {
                             verified_checks.push(name);
-                            checkMap.set(name, fullpath);
+                            this.checkMap.set(name, fullpath);
                             found = true;
                         }
                     }

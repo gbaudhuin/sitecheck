@@ -201,16 +201,6 @@ module.exports = class CheckCSRF extends Check {
 
                                     callback();
                                 });
-
-                                // TODO :
-                                // - envoyer un referer dans les requetes pour passer sur les sites qui filtrent
-                                //
-                                // En dehors de check_csrf
-                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
-                                // - reprendre les check (hormis bruteforce, csrf et autologin)  pour supprimer l'utilisation des Promise natives dans _check
-                                // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
-                                // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
-                                // - code coverage 100%
                             }, function (err) {
                                 self._handleError(err);
                                 done();

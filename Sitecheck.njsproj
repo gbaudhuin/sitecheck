@@ -46,7 +46,7 @@
     <Compile Include="src\params.js" />
     <Compile Include="src\requestwrapper.js" />
     <Compile Include="src\check.js" />
-    <Compile Include="src\checks\server\check_headers.js" />
+    <Compile Include="src\checks\page\check_headers.js" />
     <Compile Include="src\target.js" />
     <Compile Include="src\constants.js" />
     <Compile Include="test\checks\server\ut_bruteforce.js">
@@ -60,7 +60,7 @@
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\checks\server\ut_error_pages.js" />
-    <Compile Include="test\checks\server\ut_headers.js">
+    <Compile Include="test\checks\page\ut_headers.js">
       <TestFramework>Mocha</TestFramework>
     </Compile>
     <Compile Include="test\helpers\sessionHelper.js" />
