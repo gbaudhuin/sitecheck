@@ -151,15 +151,18 @@ class Check {
         if (!err) {
             return false;
         }
-        let caller = helpers.getCaller();
-        if (err.cancelled) {
-            winston.debug(caller + " : cancellation token was triggered");
-        } else {
-            console.log("Error raised in " + caller.fileName + " line " + caller.line + " : " + err.name + "\n" + err.message + "\n" + err.stack);
-            winston.error("Error raised in " + caller.fileName + " line " + caller.line + " : " + err.name + "\n" + err.message + "\n" + err.stack);
-        }
+        if (err instanceof Error) {
+            let caller = helpers.getCaller();
+            if (err.cancelled) {
+                winston.debug(caller + " : cancellation token was triggered");
+            } else {
+                winston.error("Error raised in " + caller.fileName + " line " + caller.line + " : " + err.name + "\n" + err.message + "\n" + err.stack);
+            }
 
-        return true;
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

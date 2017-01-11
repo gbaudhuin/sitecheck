@@ -29,8 +29,13 @@ describe('app.js', function () {
 
     it('can start a scan', function () {
         assert.doesNotThrow(() => {
-            let app = require('../src/app.js');
-            app.scan({ url: "http://www.example.com", checks: ["headers"], log: true });
+            try {
+                let app = require('../src/app.js');
+                app.scan({ url: "http://www.example.com", checks: ["headers"], log: true });
+            } catch (ex) {
+                console.log(ex);
+                throw ex;
+            }
         });
     });
 });

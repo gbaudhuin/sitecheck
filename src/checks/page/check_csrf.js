@@ -64,8 +64,8 @@ module.exports = class CheckCSRF extends Check {
 
         // access url with a connected user
         request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: request.sessionJar }, (err, res, body) => {
-            if (err) {
-                done(err);
+            if (self._handleError(err)) {
+                done();
                 return;
             }
 
@@ -74,10 +74,11 @@ module.exports = class CheckCSRF extends Check {
                 // access url with an unconnected user
                 request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken, jar: null }, (err, res, body) => {
                     /* istanbul ignore if */
-                    if (err) {
-                        done(err);
+                    if (self._handleError(err)) {
+                        done();
                         return;
                     }
+
                     self.ivsNotConnected = inputVector.parseHtml(body);
                     for (let formConnected of self.ivs) {
                         let found = false;
@@ -119,8 +120,10 @@ module.exports = class CheckCSRF extends Check {
                     self.getAnotherToken(cancellationToken, (ivs2) => {
                         /* istanbul ignore if */
                         if (typeof ivs2 === Error) {
-                            done(ivs2);
-                            return;
+                            if (self._handleError(ivs2)) {
+                                done();
+                                return;
+                            }
                         }
 
                         /* istanbul ignore else */
@@ -185,7 +188,8 @@ module.exports = class CheckCSRF extends Check {
                                 }
                                 request(req, (err, res, body) => {
                                     if (err) {
-                                        callback(err);
+                                        // url is unreacheable. remain silent here. It's SEO checks responsibility to check and raise this kind of issue
+                                        callback();
                                         return;
                                     }
 
@@ -197,23 +201,9 @@ module.exports = class CheckCSRF extends Check {
 
                                     callback();
                                 });
-
-                                // TODO :
-                                // - envoyer un referer dans les requetes pour passer sur les sites qui filtrent
-                                //
-                                // En dehors de check_csrf
-                                // - reprendre les ut (hormis bruteforce, csrf et autologin) pour catcher les Issues dans catch et le bon déroulement dans then
-                                // - reprendre les check (hormis bruteforce, csrf et autologin)  pour supprimer l'utilisation des Promise natives dans _check
-                                // - vérifier les checks de Valerian : disclosure, cross_domain, error_page, headers
-                                // - changer les types de check qd nécessaire : SERVER -> PAGE , etc.
-                                // - code coverage 100%
                             }, function (err) {
-                                if (err) {
-                                    done(err);
-                                } else {
-                                    done();
-                                    return;
-                                }
+                                self._handleError(err);
+                                done();
                             });
                         } else {
                             done();

@@ -22,7 +22,7 @@ const CONSTANTS = require("../../constants.js");
 
 module.exports = class CheckHeaders extends Check {
     constructor(target) {
-        super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
+        super(CONSTANTS.TARGETTYPE.PAGE, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
     }
 
     _check(cancellationToken, done) {

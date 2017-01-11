@@ -233,7 +233,7 @@ var server = http.createServer(function (req, res) {
 });
 
 
-describe('checks/server/check_csrf.js', function () {
+describe('checks/page/check_csrf.js', function () {
     this.timeout(50000);
 
     before((done) => {
@@ -322,9 +322,9 @@ describe('checks/server/check_csrf.js', function () {
         let target = new Target('http://localhost:8001/unreachable', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
-            done(new Error("Expected error not raised"));
-        }).catch((value) => {
             done();
+        }).catch((value) => {
+            done(new Error("Unexpected issue raised"));
         });
     });
 
@@ -339,12 +339,13 @@ describe('checks/server/check_csrf.js', function () {
     });
 
     it('passes a form with an unreachable action url', (done) => {
+        // check_csrf must remain silent on this type of issue. It's SEO checks responsibility to raise this kind of issue.
         let target = new Target('http://localhost:8000/unreachableaction', CONSTANTS.TARGETTYPE.PAGE);
         let check = new CheckCsrf(target);
         check.check(ct).then((value) => {
-            done(new Error("Expected error not raised"));
-        }).catch((value) => {
             done();
+        }).catch((value) => {
+            done(new Error("Unexpected issue raised"));
         });
     });
 

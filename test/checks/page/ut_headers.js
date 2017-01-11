@@ -23,7 +23,7 @@ var http = require('http');
 //var winston = require('winston');
 //var randomstring = require("randomstring");
 var CancellationToken = require('../../../src/cancellationToken.js');
-var check_headers = require('../../../src/checks/server/check_headers.js');
+var check_headers = require('../../../src/checks/page/check_headers.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/xframeoptions_ok') {
@@ -56,7 +56,7 @@ var server = http.createServer(function (req, res) {
     }
 });
 
-describe('checks/server/check_headers.js', function () {
+describe('checks/page/check_headers.js', function () {
     before(function () {
         server.listen(8000);
     });
@@ -158,7 +158,7 @@ describe('checks/server/check_headers.js', function () {
     /*
     it('handles connection errors', function (done) {
         this.timeout(10000);
-        var check_headers = require('../../../src/checks/server/check_headers.js');
+        var check_headers = require('../../../src/checks/page/check_headers.js');
         var check = new check_headers();
     
         // make sure no previous ut log file exists
