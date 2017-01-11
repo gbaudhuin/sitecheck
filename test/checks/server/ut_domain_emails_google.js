@@ -34,4 +34,24 @@ describe('checks/server/check_domain_emails_(google/bing).js', function () {
         });
     });
 
+    it.only('check private address', (done) => {
+        let check = new CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@192.168.0.1', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(new CancellationToken()).then(() => {
+            done();
+        }).catch((value) => {
+            done(value);
+        });
+    });
+
+    it.only('check if cancellable', (done) => {
+        let ct = new CancellationToken();
+        let check = new CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@peoleo.fr', CONSTANTS.TARGETTYPE.SERVER));
+        check.check(ct).then(() => {
+            done(new Error('Expected error was not send'));
+        }).catch((value) => {
+            done();
+        });
+        ct.cancel();
+    });
+
 });

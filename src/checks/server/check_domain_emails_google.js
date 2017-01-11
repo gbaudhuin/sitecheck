@@ -4,21 +4,14 @@ var Check = require('../../check');
 var request = require('request');
 const CONSTANTS = require("../../constants.js");
 var request = require('request');
-var cheerio = require('cheerio');
 var querystring = require('querystring');
 var util = require('util');
-var linkSelGoogle = 'h3.r a';
-var descSelGoogle = 'div.s';
-var itemSelGoogle = 'div.g';
-var linkSelBing = 'h2 a';
-var descSelBing = 'div.b_caption';
-var itemSelBing = 'li.b_algo';
+
 let emailList = [];
 let finalEmailList = [];
 
 var URLBing = '%s://www.bing.%s/search?&q=%s';
 
-var protocolBingErrorMsg = "Protocol `bing.protocol` needs to be set to either 'http' or 'https', please use a valid protocolBing. Setting the protocolBing to 'https'.";
 
 let resultsPerPageBing = 0;
 let tldBing = 'com';
@@ -27,14 +20,10 @@ let protocolBing = 'http';
 
 var URLGoogle = '%s://www.google.%s/search?hl=%s&q=%s';
 
-var nextTextGoogleErrorMsg = 'Translate `google.nextTextGoogle` option to selected langGoogleuage to detect next results link.';
-var protocolGoogleErrorMsg = "Protocol `google.protocol` needs to be set to either 'http' or 'https', please use a valid protocolGoogle. Setting the protocolGoogle to 'https'.";
-
 let resultsPerPageGoogle = 100;
 let tldGoogle = 'com';
 let langGoogle = 'en';
 let requestOptionsGlobalGoogle = {};
-let nextTextGoogle = 'Next';
 let protocolGoogle = 'http';
 let winston = require('winston');
 
@@ -67,13 +56,15 @@ module.exports = class CheckDomainEmailGoogle extends Check {
             requestOptionsGlobalBing.cancellationToken = cancellationToken;
             requestOptionsGlobalBing.timeout = timeout;
             self.queryGoogle(cancellationToken, queryString, (err, emailArray) => {
-                if (emailList.length > 0) {
+                if (emailArray !== null && emailList.length > 0) {
                     finalEmailList = self.trimArray(emailList);
                     console.log(self.removeDuplicates(finalEmailList));
                 }
                 self.queryBing(cancellationToken, queryString, (err, emailArray) => {
-                    finalEmailList = self.trimArray(emailList);
-                    console.log(self.removeDuplicates(finalEmailList));
+                    if (emailArray !== null && emailList.length > 0) {
+                        finalEmailList = self.trimArray(emailList);
+                        console.log(self.removeDuplicates(finalEmailList));
+                    }
                     done();
                 });
             });
@@ -90,28 +81,30 @@ module.exports = class CheckDomainEmailGoogle extends Check {
         self.isPrivateWebsite(cancellationToken, queryString, (isPrivate) => {
             if (isPrivate) {
                 callback(null, null);
-            }
-        });
-        var nextCounter = 0;
-
-        self.google(queryString, function (err, res) {
-            if (err) {
-                console.error(err);
-            }
-            if (res) {
-
-                if (nextCounter < 2) {
-                    nextCounter++;
-                    if (res.next) {
-                        res.next();
-                    }
-                }
-                else {
-                    callback(null, emailList);
-                }
+                return;
             } else {
-                winston.log('warn', 'Cannot fetch Google results. This can be due to the fact that too many requests were sent');
-                callback(null, null);
+                var nextCounter = 0;
+
+                self.google(queryString, function (err, res) {
+                    if (err) {
+                        console.error(err);
+                    }
+                    if (res) {
+
+                        if (nextCounter < 2) {
+                            nextCounter++;
+                            if (res.next) {
+                                res.next();
+                            }
+                        }
+                        else {
+                            callback(null, emailList);
+                        }
+                    } else {
+                        winston.log('warn', 'Cannot fetch Google results. This can be due to the fact that too many requests were sent');
+                        callback(null, null);
+                    }
+                });
             }
         });
     }
@@ -126,32 +119,35 @@ module.exports = class CheckDomainEmailGoogle extends Check {
         self.isPrivateWebsite(cancellationToken, queryString, (isPrivate) => {
             if (isPrivate) {
                 callback(null, null);
-            }
-        });
-        var nextCounter = 0;
-
-        self.bing(queryString, 1, function (err, res) {
-            if (err) {
-                console.error(err);
-            }
-
-            if (nextCounter < 4) {
-                nextCounter++;
-                if (res.next) {
-                    res.next();
-                }
+                return;
             }
             else {
-                callback(null, emailList);
+                var nextCounter = 0;
+
+                self.bing(queryString, 1, function (err, res) {
+                    if (err) {
+                        console.error(err);
+                    }
+
+                    if (nextCounter < 4) {
+                        nextCounter++;
+                        if (res.next) {
+                            res.next();
+                        }
+                    }
+                    else {
+                        callback(null, emailList);
+                    }
+                });
             }
         });
     }
 
     isPrivateWebsite(cancellationToken, queryString, callback) {
-        if (queryString.match('(10\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)') ||
-            queryString.match('(172\.[1-3]\d?\d?\.\d?\d?\d?\.\d?\d?\d?)') ||
-            queryString.match('(192\.168\.\d?\d?\d?\.\d?\d?\d?)') ||
-            queryString.match('(127\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)')) {
+        if (/(10\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)/.test(queryString) ||
+            /(172\.[1-3]\d?\d?\.\d?\d?\d?\.\d?\d?\d?)/.test(queryString) ||
+            /(192\.168\.\d?\d?\d?\.\d?\d?\d?)/.test(queryString) ||
+            /(127\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)/.test(queryString)) {
             callback(true);
         }
         else {
@@ -175,12 +171,6 @@ module.exports = class CheckDomainEmailGoogle extends Check {
     igoogle(query, start, callback) {
         let self = this;
         self.google.resultsPerPageGoogle = resultsPerPageGoogle;
-        if (resultsPerPageGoogle > 100) resultsPerPageGoogle = 100; // google won't allow greater than 100 anyway
-        if (langGoogle !== 'en' && nextTextGoogle === 'Next') console.warn(nextTextGoogleErrorMsg);
-        if (protocolGoogle !== 'http' && protocolGoogle !== 'https') {
-            protocolGoogle = 'https';
-            console.warn(protocolGoogleErrorMsg);
-        }
 
         var newUrl = util.format(URLGoogle, protocolGoogle, tldGoogle, langGoogle, querystring.escape(query));
         var requestOptions = {
@@ -205,6 +195,7 @@ module.exports = class CheckDomainEmailGoogle extends Check {
         }
         console.log(requestOptions.url);
         request.get(requestOptions, function (err, resp, body) {
+            /* istanbul ignore else */
             if ((err === null) && resp.statusCode === 200) {
                 let b = body.replace(/<strong>/g, '')
                     .replace(/ <strong>/g, '')
@@ -229,7 +220,7 @@ module.exports = class CheckDomainEmailGoogle extends Check {
                 console.log(regx);
                 let match = b.match(regx);///[a-zA-Z0-9\._\%+-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,64}/g);
                 for (let m = 0; m < match.length; m++) {
-                    let regex = new RegExp('for@'+queryRegex, 'gi');
+                    let regex = new RegExp('for@' + queryRegex, 'gi');
                     if (match[m].indexOf('%') !== -1 || regex.test(match[m])) {
                         match.splice(m, 1);
                     } else {
@@ -248,7 +239,8 @@ module.exports = class CheckDomainEmailGoogle extends Check {
                 };
 
                 callback(null, res);
-            } else {
+            }
+            else {
                 callback(null, null);
             }
         });
@@ -269,10 +261,6 @@ module.exports = class CheckDomainEmailGoogle extends Check {
 
     ibing(query, start, callback) {
         let self = this;
-        if (protocolBing !== 'http' && protocolBing !== 'https') {
-            protocolBing = 'https';
-            console.warn(protocolBingErrorMsg);
-        }
 
         var newUrl = util.format(URLBing, protocolBing, tldBing, querystring.escape(query));
         var requestOptions = {
@@ -290,14 +278,12 @@ module.exports = class CheckDomainEmailGoogle extends Check {
                 requestOptions[k] = requestOptionsGlobalBing[k];
             }
         }
-        if (requestOptions.url.indexOf('first=0') !== -1) {
-            requestOptions.url = requestOptions.url.replace('first=0', 'first=' + start);
-            resultsPerPageBing += 10;
-        } else {
-            resultsPerPageBing += 10;
-            requestOptions.url = requestOptions.url.replace('first=' + resultsPerPageBing - 10, 'first=' + resultsPerPageBing - 1);
-        }
+
+        requestOptions.url = requestOptions.url.replace('first=0', 'first=' + start);
+        resultsPerPageBing += 10;
+
         request.get(requestOptions, function (err, resp, body) {
+            /* istanbul ignore else */
             if ((err === null) && resp.statusCode === 200) {
                 let b = body.replace(/<strong>/g, '')
                     .replace(/ <strong>/g, '')
@@ -344,8 +330,10 @@ module.exports = class CheckDomainEmailGoogle extends Check {
                 };
 
                 callback(null, res);
-            } else {
-                callback(new Error('Error on response' + (resp ? ' (' + resp.statusCode + ')' : '') + ':' + err + ' : ' + body), null, null);
+            }
+            else {
+                winston.log('warn', 'Cannot fetch Bing results. This can be due to the fact that too many requests were sent');
+                callback(null, null);
             }
         });
     }
