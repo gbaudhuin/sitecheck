@@ -86,16 +86,13 @@ class CheckDomainEmailGoogle extends Check {
                 var nextCounter = 0;
 
                 self.google(queryString, function (err, res) {
-                    if (err) {
-                        console.error(err);
-                    }
+
+                    /* istanbul ignore else */
                     if (res) {
 
                         if (nextCounter < 2) {
                             nextCounter++;
-                            if (res.next) {
-                                res.next();
-                            }
+                            res.next();
                         }
                         else {
                             callback(null, emailList);
@@ -125,15 +122,10 @@ class CheckDomainEmailGoogle extends Check {
                 var nextCounter = 0;
 
                 self.bing(queryString, 1, function (err, res) {
-                    if (err) {
-                        console.error(err);
-                    }
 
                     if (nextCounter < 4) {
                         nextCounter++;
-                        if (res.next) {
-                            res.next();
-                        }
+                        res.next();
                     }
                     else {
                         callback(null, emailList);
@@ -159,11 +151,7 @@ class CheckDomainEmailGoogle extends Check {
     google(query, start, callback) {
         let self = this;
         var startIndex = 0;
-        if (typeof callback === 'undefined') {
-            callback = start;
-        } else {
-            startIndex = start;
-        }
+        callback = start;
         self.igoogle(query, startIndex, callback);
     }
 
@@ -250,11 +238,7 @@ class CheckDomainEmailGoogle extends Check {
     bing(query, start, callback) {
         let self = this;
         var startIndex = 0;
-        if (typeof callback === 'undefined') {
-            callback = start;
-        } else {
-            startIndex = start;
-        }
+        startIndex = start;
         self.ibing(query, startIndex, callback);
     }
 
@@ -380,6 +364,8 @@ function checkInHtml(uri, query, cancellationToken, callback) {
                 .replace(/&#64;/g, '@')
                 .replace(/&#46;/g, '.')
                 .replace(/<!--[^>]*-->/g, '')
+                .replace(/\sAT\s/gi, '@')
+                .replace(/\sDOT\s/gi, '.')
                 .replace(/<\/strong>/g, '')
                 .replace(/ <\/strong>/g, '')
                 .replace(/   /g, '')
@@ -390,10 +376,8 @@ function checkInHtml(uri, query, cancellationToken, callback) {
             queryRegex = query.replace('@', '');
             var regx = new RegExp('(?![=:+/*-<>]|[\\s])[a-zA-Z0-9._%+-]+@' + queryRegex, 'g');
             let match = b.match(regx);///[a-zA-Z0-9\._\%+-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,64}/g);
-            for (let m = 0; m < match.length; m++) {
-                if (match[m].indexOf('%') !== -1) {
-                    match.splice(m, 1);
-                } else {
+            if (match) {
+                for (let m = 0; m < match.length; m++) {
                     emailListHtmlPage.push(match[m].toLowerCase());
                 }
             }

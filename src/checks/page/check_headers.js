@@ -68,9 +68,6 @@ module.exports = class CheckHeaders extends Check {
             }
 
             else {
-                /*async.eachSeries(self.COMMON_HEADERS, (x, callback) => {
-                    console.log(x);
-                });*/
                 if(res.statusCode >= 300 && res.statusCode <= 310 && res.headers['content-location']){
                     self._raiseIssue('content-location_300.xml', null, "The URL " + res.request.uri.href + " sent HTTP header : 'content-location' with value " +
                     res.headers['content-location'] + " in an HTTP response with code " + 
@@ -88,7 +85,6 @@ module.exports = class CheckHeaders extends Check {
                     }
                     callback();
                 });
-                //console.log(res.headers);
             }
 
             done();

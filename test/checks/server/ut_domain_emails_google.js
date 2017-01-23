@@ -26,6 +26,9 @@ var server = http.createServer(function (req, res) {
     if (req.url == '/check_html') {
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end('<li><p>xyz@example.com</p></li>');
+    } else if (req.url == '/no_email_found') {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end('');
     }
 });
 
@@ -36,8 +39,8 @@ describe('checks/server/check_domain_emails_(google/bing).js', function () {
         server.listen(8000);
     });
 
-    it('check Google and Bing', (done) => {
-        let check = new CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@peoleo.fr', CONSTANTS.TARGETTYPE.SERVER));
+    it.only('check Google and Bing', (done) => {
+        let check = new CheckDomainEmailGoogle.CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@peoleo.fr', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
         }).catch((value) => {
@@ -45,8 +48,8 @@ describe('checks/server/check_domain_emails_(google/bing).js', function () {
         });
     });
 
-    it('check private address', (done) => {
-        let check = new CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@192.168.0.1', CONSTANTS.TARGETTYPE.SERVER));
+    it.only('check private address', (done) => {
+        let check = new CheckDomainEmailGoogle.CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@192.168.0.1', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
         }).catch((value) => {
@@ -54,9 +57,9 @@ describe('checks/server/check_domain_emails_(google/bing).js', function () {
         });
     });
 
-    it('check if cancellable', (done) => {
+    it.only('check if cancellable', (done) => {
         let ct = new CancellationToken();
-        let check = new CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@peoleo.fr', CONSTANTS.TARGETTYPE.SERVER));
+        let check = new CheckDomainEmailGoogle.CheckDomainEmailGoogle(new Target('https://www.google.com/#safe=off&q=@peoleo.fr', CONSTANTS.TARGETTYPE.SERVER));
         check.check(ct).then(() => {
             done(new Error('Expected error was not send'));
         }).catch((value) => {
@@ -65,16 +68,40 @@ describe('checks/server/check_domain_emails_(google/bing).js', function () {
         ct.cancel();
     });
 
-    it('check in html page', (done) => {
+    it.only('check in html page', (done) => {
         CheckDomainEmailGoogle.checkInHtml('http://localhost:8000/check_html', '@example.com', new CancellationToken(), (err, list) => {
-            if(!err){
-                for(let item of list){
+            if (!err) {
+                for (let item of list) {
                     console.log(item);
                 }
                 done();
             }
-            else{
+            else {
                 done(new Error('Unexpected error was send'));
+            }
+        });
+    });
+
+    it.only('does not have email in page', (done) => {
+        CheckDomainEmailGoogle.checkInHtml('http://localhost:8000/no_email_found', '@example.com', new CancellationToken(), (err, list) => {
+            if (!err) {
+                if (!list) {
+                    done();
+                }
+                else {
+                    done(new Error('Unexpected error was send'));
+                }
+            }
+        });
+    });
+
+    it.only('check unreachable page', (done) => {
+        CheckDomainEmailGoogle.checkInHtml('http://localhost:8001/check_html', '@example.com', new CancellationToken(), (err, list) => {
+            if (!err) {
+                done(new Error('Expected error was not send'));
+            }
+            else {
+                done();
             }
         });
     });
