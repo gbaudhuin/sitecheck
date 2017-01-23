@@ -27,7 +27,7 @@ let requestOptionsGlobalGoogle = {};
 let protocolGoogle = 'http';
 let winston = require('winston');
 
-module.exports = class CheckDomainEmailGoogle extends Check {
+class CheckDomainEmailGoogle extends Check {
 
     constructor(target) {
         super(CONSTANTS.TARGETTYPE.SERVER, CONSTANTS.CHECKFAMILY.SECURITY, false, true, target);
@@ -357,4 +357,57 @@ module.exports = class CheckDomainEmailGoogle extends Check {
         return EmailAddressesArray;
     }
 
-};
+}
+
+function checkInHtml(uri, query, cancellationToken, callback) {
+    let emailListHtmlPage = [];
+    var requestOptions = {
+        url: uri,
+        timeout: 10000,
+        cancellationToken: cancellationToken,
+        headers: {
+            'User-Agent': "Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.51 Safari/537.36"
+        }
+    };
+
+    request.get(requestOptions, function (err, resp, body) {
+        if (!err && resp.statusCode === 200) {
+            let b = body.replace(/<strong>/g, '')
+                .replace(/ <strong>/g, '')
+                .replace(/<em>/g, '')
+                .replace(/<\/em>/g, '')
+                .replace(/%40/g, '@')
+                .replace(/&#64;/g, '@')
+                .replace(/&#46;/g, '.')
+                .replace(/<!--[^>]*-->/g, '')
+                .replace(/<\/strong>/g, '')
+                .replace(/ <\/strong>/g, '')
+                .replace(/   /g, '')
+                .replace(/  /g, '')
+                .replace(/ @/g, '@');
+
+            let queryRegex = query.replace('.', '\\.');
+            queryRegex = query.replace('@', '');
+            var regx = new RegExp('(?![=:+/*-<>]|[\\s])[a-zA-Z0-9._%+-]+@' + queryRegex, 'g');
+            let match = b.match(regx);///[a-zA-Z0-9\._\%+-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,64}/g);
+            for (let m = 0; m < match.length; m++) {
+                if (match[m].indexOf('%') !== -1) {
+                    match.splice(m, 1);
+                } else {
+                    emailListHtmlPage.push(match[m].toLowerCase());
+                }
+            }
+            if (emailListHtmlPage.length > 0) {
+                callback(null, emailListHtmlPage);
+            }
+            else {
+                callback(null, null);
+            }
+        }
+        else {
+            callback(new Error('This page is not reachable'), null);
+        }
+    });
+}
+
+module.exports = { CheckDomainEmailGoogle, checkInHtml };
