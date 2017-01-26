@@ -1,7 +1,6 @@
 "use strict";
 
 var Check = require('../../check');
-var request = require('request');
 const CONSTANTS = require("../../constants.js");
 var request = require('request');
 var querystring = require('querystring');

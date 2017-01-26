@@ -71,7 +71,7 @@ describe('checks/page/check_headers.js', function () {
 
     //let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
 
-    it.only('contains xframeoption header', function (done) {
+    it('contains xframeoption header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -84,7 +84,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('does not contains xframeoption header', function (done) {
+    it('does not contains xframeoption header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/xframeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -97,7 +97,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('contains xcontenttypeoptions header', function (done) {
+    it('contains xcontenttypeoptions header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ok', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -110,7 +110,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('does not contains xcontenttypeoptions header', function (done) {
+    it('does not contains xcontenttypeoptions header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_ko', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -123,7 +123,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('works', function (done) {
+    it('works', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/everything_ok', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -136,7 +136,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
     
-    it.only('have exotic header', function (done) {
+    it('have exotic header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/exotic_header', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -149,7 +149,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('violates RFC', function (done) {
+    it('violates RFC', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/code_300', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -162,7 +162,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('contains partial xcontenttypeoptions header', function (done) {
+    it('contains partial xcontenttypeoptions header', function (done) {
         let check = new check_headers(new Target('http://localhost:8000/xcontenttypeoptions_partial', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -175,7 +175,7 @@ describe('checks/page/check_headers.js', function () {
         });
     });
 
-    it.only('is cancellable', function (done) {
+    it('is cancellable', function (done) {
         var ct = new CancellationToken();
         let check = new check_headers(new Target('http://localhost:8000/cancel', CONSTANTS.TARGETTYPE.SERVER));
         check.check(ct)
