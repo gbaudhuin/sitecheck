@@ -1,0 +1,14 @@
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>http://localhost:8000/</loc>
+<lastmod>2016-11-28</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+<url>
+<loc>http://localhost:8000/allowed</loc>
+<lastmod>2016-11-28</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+</urlset>

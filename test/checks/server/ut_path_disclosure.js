@@ -61,7 +61,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         server.listen(8000);
     });
 
-    it.only('contains linux path disclosure', function (done) {
+    it('contains linux path disclosure', function (done) {
         let check = new check_path_disclosure(new Target('http://localhost:8000/linux_path_disclosure', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -74,7 +74,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
     });
 
-    it.only('contains windows path disclosure', function (done) {
+    it('contains windows path disclosure', function (done) {
         let check = new check_path_disclosure(new Target('http://localhost:8000/windows_path_disclosure', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -87,7 +87,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
     });
 
-    it.only('works', function (done) {
+    it('works', function (done) {
         let check = new check_path_disclosure(new Target('http://localhost:8000/works', CONSTANTS.TARGETTYPE.SERVER));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -100,7 +100,7 @@ describe('checks/server/check_code_disclosure.js', function () {
         });
     });
 
-    it.only('check if cancellable', (done) => {
+    it('check if cancellable', (done) => {
         let ct = new CancellationToken();
         let check = new check_path_disclosure(new Target('http://localhost:8000/cancellable', CONSTANTS.TARGETTYPE.SERVER));
         check.check(ct).then(() => {

@@ -1,0 +1,9 @@
+# Website Sitemap
+Sitemap: https://localhost:8000/sitemap.xml
+
+User-agent: *
+Crawl-delay: 30
+Disallow: /
+Allow: /allowed/
+Disallow: /test
+Allow: /test/

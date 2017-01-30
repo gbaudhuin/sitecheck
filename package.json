@@ -59,9 +59,11 @@
     "randomstring": "^1.1.5",
     "rc": "^1.1.6",
     "request": "^2.79.0",
+    "robots-parser": "^1.0.1",
     "tough-cookie": "^2.3.2",
     "valid-url": "^1.0.9",
-    "winston": "^2.3.0"
+    "winston": "^2.3.0",
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
     "chai": "^3.5.0",
