@@ -12,7 +12,7 @@
     "sitecheck": "bin/cli.js"
   },
   "scripts": {
-    "start": "node ./src/app.js",
+    "start": "node ./bin/cli.js",
     "lint": "jshint ./src",
     "mocha": "mocha ./test/**/*.js"
   },
@@ -51,6 +51,7 @@
     "fs-extra": "^1.0.0",
     "google": "^2.1.0",
     "is-relative-url": "^2.0.0",
+    "is-url": "^1.2.2",
     "meow": "^3.7.0",
     "minimist": "^1.2.0",
     "mocha": "^3.2.0",

@@ -303,3 +303,5 @@ node_modules/
 /.coverrun
 /.coverdata
 /.coveralls.yml
+
+./test/checks/server/ut_global_dev.js

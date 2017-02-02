@@ -20,7 +20,7 @@ const CONSTANTS = require('../../../src/constants.js');
 var Target = require('../../../src/target.js');
 var http = require('http');
 var CancellationToken = require('../../../src/cancellationToken.js');
-var check_path_disclosure = require('../../../src/checks/server/check_path_disclosure.js');
+var check_path_disclosure = require('../../../src/checks/page/check_path_disclosure.js');
 
 var server = http.createServer(function (req, res) {
     if (req.url == '/linux_path_disclosure') {

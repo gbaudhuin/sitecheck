@@ -112,7 +112,7 @@ module.exports = class CheckCSRF extends Check {
                             // Note : this check is prone to false positives in case of ajax forms which don't contain csrf token hidden input but where csrf protection is handled by js code. 
                             // A possibility could be to detect such forms with phantom js by detecting event handlers on forms or form buttons
                             self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with no CSRF protection. (This may be a false positive in case of an ajax form).", true);
-                        }
+                    }
                     }
 
                     // Now, we check if anti-csrf tokens are correctly generated and checked
@@ -142,7 +142,7 @@ module.exports = class CheckCSRF extends Check {
                                                 if (csrfField1.value === csrfField2.value) {
                                                     // tokens are the same accross sessions
                                                     self._raiseIssue("warning_csrf.xml", null, "Url '" + res.request.uri.href + "' contains a form with a CSRF token that is the same accross different sessions.", true);
-                                                } else {
+                                            } else {
                                                     // the form has different anti csrf tokens. Remember them to check they're correctly checked.
                                                     goodCouples.push([csrfField1, csrfField2, iv1]);
                                                 }
@@ -197,7 +197,7 @@ module.exports = class CheckCSRF extends Check {
                                     // note : Must improve following lines to handle other sites possible behavior.
                                     if (res.statusCode == 302) {
                                         self._raiseIssue("warning_csrf.xml", null, 'Form "' + iv.name + '" at url "' + self.target.uri.href + '" does not correctly check anti csrf tokens. An anti CSRF token from a session was succesfuly used in another session.', true);
-                                    }
+                                }
 
                                     callback();
                                 });

@@ -1,4 +1,4 @@
 {
-  "url": "http://www.example.com",
-  "checks":["headers"]
+  "url": "https://www.owasp.org/index.php/Full_Path_Disclosure",
+  "checks":["headers", "path_disclosure", "code_disclosure"]
 }

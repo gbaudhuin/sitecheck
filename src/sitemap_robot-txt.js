@@ -34,6 +34,7 @@ class Sitemap_Robot {
         this.url = url;
         this.sitemap_urls = [];
         this.robot = null;
+        this.sitemapUrl = null;
     }
 
     /**
@@ -44,20 +45,39 @@ class Sitemap_Robot {
      * @param {function} done: callback function
      */
 
-    getUrlsFromSitemap(cancellationToken, done) {
+    getUrlsFromSitemap(url, cancellationToken, done) {
         let self = this;
-        request({ url: self.url, cancellationToken: cancellationToken, timeout: 5000 }, (err, res, body) => {
-            if (!err) {
-                xmlParser(body, (err, result) => {
-                    for (let item of result.urlset.url) {
-                        self.sitemap_urls.push(item.loc);
+        if (self.sitemapUrl || url) {
+            if (self.sitemapUrl == url) {
+                request({ url: url, cancellationToken: cancellationToken, timeout: 5000 }, (err, res, body) => {
+                    if (!err) {
+                        xmlParser(body, (err, result) => {
+                            for (let item of result.urlset.url) {
+                                self.sitemap_urls.push(item.loc);
+                            }
+                            done(self.sitemap_urls, null);
+                        });
+                    } else {
+                        done(null, err);
                     }
-                    done(self.sitemap_urls, null);
                 });
-            } else {
-                done(null, err);
+            } else{
+                request({ url: self.sitemapUrl[0], cancellationToken: cancellationToken, timeout: 5000 }, (err, res, body) => {
+                    if (!err) {
+                        xmlParser(body, (err, result) => {
+                            for (let item of result.urlset.url) {
+                                self.sitemap_urls.push(item.loc);
+                            }
+                            done(self.sitemap_urls, null);
+                        });
+                    } else {
+                        done(null, err);
+                    }
+                });
             }
-        });
+        } else {
+            done(null, null);
+        }
     }
 
     /**
@@ -76,6 +96,7 @@ class Sitemap_Robot {
                     options.push(matched);
                 }
                 self.robot = robotsParser(self.url, options.join('\n'));
+                self.sitemapUrl = self.robot.getSitemaps() !== undefined ? self.robot.getSitemaps() : null;
                 done(null);
             } else {
                 done(err);

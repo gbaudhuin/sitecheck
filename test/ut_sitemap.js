@@ -41,9 +41,9 @@ describe('Target class', function () {
         server.listen(8000);
     });
 
-    it.only('load sitemap', (done) => {
+    it('load sitemap', (done) => {
         let sitemap = new Sitemap('http://localhost:8000/sitemap');
-        sitemap.getUrlsFromSitemap(new CancellationToken(), (itemList, err) => {
+        sitemap.getUrlsFromSitemap('http://localhost:8000/sitemap', new CancellationToken(), (itemList, err) => {
             if(!err){
                 done();
             }
@@ -53,9 +53,9 @@ describe('Target class', function () {
         });
     });
 
-    it.only('cannot access sitemap', (done) => {
+    it('cannot access sitemap', (done) => {
         let sitemap = new Sitemap('http://localhost:8000/sitemap_not_found');
-        sitemap.getUrlsFromSitemap(new CancellationToken(), (itemList, err) => {
+        sitemap.getUrlsFromSitemap('http://localhost:8000/sitemap', new CancellationToken(), (itemList, err) => {
             if(err){
                 done();
             }
@@ -65,7 +65,7 @@ describe('Target class', function () {
         });
     });
 
-    it.only('load robots.txt then check a disallowed page', (done) => {
+    it('load robots.txt then check a disallowed page', (done) => {
         let sitemap = new Sitemap("http://localhost:8000/robot");
         sitemap.initializeRobotParser(new CancellationToken(), (err) => {
             if(!err){
@@ -83,7 +83,7 @@ describe('Target class', function () {
         });
     });
 
-    it.only('cannot access robots.txt', (done) => {
+    it('cannot access robots.txt', (done) => {
         let sitemap = new Sitemap("http://localhost:8000/robot_not_found");
         sitemap.initializeRobotParser(new CancellationToken(), (err) => {
             if(err){
@@ -94,7 +94,7 @@ describe('Target class', function () {
         });
     });
 
-    it.only('load robots.txt then check an allowed page', (done) => {
+    it('load robots.txt then check an allowed page', (done) => {
         let sitemap = new Sitemap("http://localhost:8000/robot");
         sitemap.initializeRobotParser(new CancellationToken(), (itemList, err) => {
             sitemap.isAllowed('http://localhost:8000/allowed/test', (allowed) => {
@@ -108,7 +108,7 @@ describe('Target class', function () {
         });
     });
 
-    it.only('load robots.txt then check another allowed page', (done) => {
+    it('load robots.txt then check another allowed page', (done) => {
         let sitemap = new Sitemap("http://localhost:8000/robot");
         sitemap.initializeRobotParser(new CancellationToken(), (itemList, err) => {
             sitemap.isAllowed('http://localhost:8000/test/', (allowed) => {
@@ -122,7 +122,7 @@ describe('Target class', function () {
         });
     });
 
-    it.only('load robots.txt then check another disallowed page', (done) => {
+    it('load robots.txt then check another disallowed page', (done) => {
         let sitemap = new Sitemap("http://localhost:8000/robot");
         sitemap.initializeRobotParser(new CancellationToken(), (itemList, err) => {
             sitemap.isAllowed('http://localhost:8000/test', (allowed) => {

@@ -141,6 +141,7 @@ module.exports = class CheckCrossDomain extends Check {
             });
             if (!found) {
                 self._raiseIssue("warning_cross_domain.xml", null, "There is a script tag which contains potentially insecured Javascript source at url'" + res.request.uri.href + "' this is not recommanded to delegate security to a third party website.", true);
+                console.log('Cross domain unsecured script found at ' + self.target.uri.href);
             }
             done();
         });

@@ -90,6 +90,7 @@ module.exports = class CheckErrorPages extends Check {
 
     _check(cancellationToken, done) {
         var self = this;
+        let server = "";
         var timeout = 3000;
         request.get({ url: self.target.uri, timeout: timeout, cancellationToken: cancellationToken }, function (err, res, body) {
             if (self._handleError(err)) {
@@ -102,6 +103,8 @@ module.exports = class CheckErrorPages extends Check {
                     if (matched) {
                         if (res.headers.server)
                             self._raiseIssue("error_pages.xml", null, VERSION_REGEX[reg].server + " server found with version '" + res.headers.server + "' at Url '" + res.request.uri.href + "'", true);
+                            server = VERSION_REGEX[reg].server;
+                            console.log(VERSION_REGEX[reg].server + " server found in the headers with version " + res.headers.server + " at Url " + res.request.uri.href);
                     }
                 }
             }
@@ -110,6 +113,7 @@ module.exports = class CheckErrorPages extends Check {
                 if (400 < parseInt(res.statusCode, 10) && 600 > parseInt(res.statusCode, 10)) {
                     if (body.indexOf(ERROR_PAGES[error]) !== -1) {
                         self._raiseIssue("error_pages.xml", null, "Descriptive error page found at Url '" + res.request.uri.href + "'", true);
+                        console.log("Descriptive error page found at Url '" + res.request.uri.href);
                     }
                 }
             }

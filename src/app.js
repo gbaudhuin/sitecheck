@@ -53,7 +53,7 @@ function scan(opts) {
 
     var ct = new CancellationToken();
     for (let target of targets) {
-        console.log(target);
+        //console.log(target);
         checkTarget(target, ct);
     }
 }

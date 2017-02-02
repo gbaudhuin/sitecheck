@@ -32,21 +32,24 @@ const PYTHON = 'Python';
 const GROOVY = 'Groovy';
 
 const SOURCE_CODE = [
-    { "regEx": '<\\?php .*? \\?>', "language": PHP },
+    { "regEx": '&lt;\\?php(.|\\s)*?&gt;', "language": PHP },
     { "regEx": '<\\?php\\n.*?\\?>', "language": PHP },
     { "regEx": '<\\?php\\r.*?\\?>', "language": PHP },
     { "regEx": '<\\?php\\n.*?\\n\\?>', "language": PHP },
     { "regEx": '<\\?php\\r.*?\\r\\?>', "language": PHP },
-    { "regEx": '<\\? .*?\\?>', "language": PHP },
+    { "regEx": '<\\?(.|\s)*\\?>', "language": PHP },
     { "regEx": '<\\?\n.*?\\?>', "language": PHP },
     { "regEx": '<\\?\r.*?\\?>', "language": PHP },
+    { "regEx": '&lt;%(.|\\s)*?&gt;', "language": ASP + "/" + JSP },
     { "regEx": '<% .*?%>', "language": ASP + "/" + JSP },
     { "regEx": '<%\n.*?%>', "language": ASP + "/" + JSP },
     { "regEx": '<%\r.*?%>', "language": ASP + "/" + JSP },
     { "regEx": '<%@ .*?%>', "language": ASPX },
     { "regEx": '<%@\n.*?%>', "language": ASPX },
     { "regEx": '<%@\r.*?%>', "language": ASPX },
+    { "regEx": '&lt;asp:.*?%&gt;', "language": ASPX },
     { "regEx": '<asp:.*?%>', "language": ASPX },
+    { "regEx": '&lt;jsp:.*?&gt;', "language": JSP },
     { "regEx": '<jsp:.*?>', "language": JSP },
     { "regEx": '<%! .*%>', "language": JSP },
     { "regEx": '<%!\n.*%>', "language": JSP },
@@ -81,9 +84,8 @@ module.exports = class CheckCodeDisclosure extends Check {
                     done();
                     return;
                 }
-
                 for (let reg of SOURCE_CODE) {
-                    let matched = body.match(new RegExp(reg.regEx, 'i'));
+                    let matched = body.match(new RegExp(reg.regEx, 'gi'));
                     if (matched) {
                         for (let blacklist_item in BLACKLIST) {
                             if (matched[0].indexOf(blacklist_item) === -1) {
@@ -94,6 +96,7 @@ module.exports = class CheckCodeDisclosure extends Check {
                                 }
                                 else {
                                     self._raiseIssue("code_disclosure.xml", self.target.uri, reg.language + " tag non interpreted by browser at '" + res.request.uri.href + "'", true);
+                                    console.log("There is a " + reg.language + " error at " + self.target.uri.href);
                                     done();
                                     return;
                                 }

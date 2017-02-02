@@ -45,9 +45,13 @@ class CheckDomainEmailGoogle extends Check {
                 done();
                 return;
             }
-
-            let queryStringArray = (self.target.uri.hash).match('(q=)(.*)');
-            let queryString = queryStringArray[2];
+            let host = "";
+            if(self.target.uri.host.indexOf("www.") !== -1){
+                host = self.target.uri.host.replace('www.', '');
+            } else{
+                host = self.target.uri.host;
+            }
+            let queryString = "@" + host;
             requestOptionsGlobalGoogle.url = 'http://www.google.com/search?num=100&start=0&hl=en&ie=UTF-8&oe=UTF-8&q=' + queryString;
             requestOptionsGlobalGoogle.cancellationToken = cancellationToken;
             requestOptionsGlobalGoogle.timeout = timeout;
@@ -175,12 +179,9 @@ class CheckDomainEmailGoogle extends Check {
                 requestOptions[k] = requestOptionsGlobalGoogle[k];
             }
         }
-        console.log(start);
         if (start !== 0) {
-            console.log(requestOptions.url);
             requestOptions.url = requestOptions.url.replace('start=0', 'start=' + start);
         }
-        console.log(requestOptions.url);
         request.get(requestOptions, function (err, resp, body) {
             /* istanbul ignore else */
             if ((err === null) && resp.statusCode === 200) {
@@ -204,7 +205,6 @@ class CheckDomainEmailGoogle extends Check {
                 let queryRegex = query.replace('.', '\\.');
                 queryRegex = query.replace('@', '');
                 var regx = new RegExp('(?![=:+/*-<>]|[\\s])[a-zA-Z0-9._%-]+@' + queryRegex, 'g');
-                console.log(regx);
                 let match = b.match(regx);///[a-zA-Z0-9\._\%+-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,64}/g);
                 for (let m = 0; m < match.length; m++) {
                     let regex = new RegExp('for@' + queryRegex, 'gi');
