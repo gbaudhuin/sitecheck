@@ -60,7 +60,6 @@ class getEmailWebsite {
             }
             mailList = self.removeDuplicates(mailList);
             if (mailList.length > 0) {
-                console.log(mailList);
                 callback(mailList, null);
             } else {
                 callback(null, null);

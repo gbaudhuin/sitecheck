@@ -61,12 +61,10 @@ class CheckDomainEmailGoogle extends Check {
             self.queryGoogle(cancellationToken, queryString, (err, emailArray) => {
                 if (emailArray !== null && emailList.length > 0) {
                     finalEmailList = self.trimArray(emailList);
-                    console.log(self.removeDuplicates(finalEmailList));
                 }
                 self.queryBing(cancellationToken, queryString, (err, emailArray) => {
                     if (emailArray !== null && emailList.length > 0) {
                         finalEmailList = self.trimArray(emailList);
-                        console.log(self.removeDuplicates(finalEmailList));
                     }
                     done();
                 });
@@ -216,7 +214,6 @@ class CheckDomainEmailGoogle extends Check {
                 }
 
                 emailList.pop();
-                console.log(emailList);
 
                 var res = {};
                 res.next = function () {
@@ -286,7 +283,6 @@ class CheckDomainEmailGoogle extends Check {
                 let queryRegex = query.replace('.', '\\.');
                 queryRegex = query.replace('@', '');
                 var regx = new RegExp('(?![=:+/*-<>]|[\\s])[a-zA-Z0-9._%+-]+@' + queryRegex, 'g');
-                console.log(regx);
                 let match = b.match(regx);///[a-zA-Z0-9\._\%+-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,64}/g);
                 for (let m = 0; m < match.length; m++) {
                     if (match[m].indexOf('%') !== -1) {
@@ -297,7 +293,6 @@ class CheckDomainEmailGoogle extends Check {
                 }
 
                 emailList.pop();
-                console.log(emailList);
 
                 var res = {};
 

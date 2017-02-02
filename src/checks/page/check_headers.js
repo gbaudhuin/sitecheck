@@ -57,12 +57,10 @@ module.exports = class CheckHeaders extends Check {
 
             if (!res.headers['x-frame-options']) {
                 self._raiseIssue("x_frame_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
-                console.log('x_frame_options header is missing');
         }
 
             if (!res.headers['x-content-type-options']) {
                 self._raiseIssue("x_content_type_options_missing.xml", null, "Url was '" + res.request.uri.href + "'", true);
-                console.log('x_content_type_options header is missing');
         }
 
             if (res.headers['x-content-type-options'] && (res.headers['x-content-type-options']).toLowerCase() !== 'nosniff') {
@@ -84,7 +82,6 @@ module.exports = class CheckHeaders extends Check {
                     }
                     if(!found){
                         self._raiseIssue('exotic_header.xml', null, "Exotic header found in the response at url " + res.request.uri.href);
-                        console.log('Exotic header found');
             }
                     callback();
                 });

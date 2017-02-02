@@ -61,14 +61,13 @@ class Sitemap_Robot {
                         done(null, err);
                     }
                 });
-            } else{
+            } else {
                 request({ url: self.sitemapUrl[0], cancellationToken: cancellationToken, timeout: 5000 }, (err, res, body) => {
                     if (!err) {
                         xmlParser(body, (err, result) => {
                             for (let item of result.urlset.url) {
                                 self.sitemap_urls.push(item.loc);
                             }
-                            console.log(self.sitemap_urls.length + " URLs found");
                             done(self.sitemap_urls, null);
                         });
                     } else {
@@ -93,12 +92,17 @@ class Sitemap_Robot {
         request({ url: self.url, cancellationToken: cancellationToken, timeout: 5000 }, (err, res, body) => {
             if (!err) {
                 let match = body.match(/(Disallow: |Allow: |User-agent: |Crawl-delay: |Sitemap: |Host: )([A-Za-z0-9\\\/\-\\.\\&\\*\\?\\=\\$\\_\:]*)/gi);
-                for (let matched of match) {
-                    options.push(matched);
+                if (match) {
+                    for (let matched of match) {
+                        options.push(matched);
+                    }
+                    self.robot = robotsParser(self.url, options.join('\n'));
+                    self.sitemapUrl = self.robot.getSitemaps() !== undefined ? self.robot.getSitemaps() : null;
+                    done(null);
                 }
-                self.robot = robotsParser(self.url, options.join('\n'));
-                self.sitemapUrl = self.robot.getSitemaps() !== undefined ? self.robot.getSitemaps() : null;
-                done(null);
+                else{
+                    done(new Error('Url not reachable'));
+                }
             } else {
                 done(err);
             }

@@ -90,58 +90,13 @@ module.exports = class CheckPathDisclosure extends Check {
                         alertMessage += '\n' + path;
                     }
                     self._raiseIssue('path_disclosure.xml', null, alertMessage);
-                    console.log(alertMessage);
                 }
                 done();
             });
         });
     }
 
-    /*isAttribute(body, abnormalUrlArray, callback) {
-        let loopCount = 0;
-        let self = this;
-        let $ = cheerio.load(body);
-        let i = 0;
-        $('*').each(function () {
-            for (let elem of $(this)[0].children) {
-                if (elem.data && elem.data.length > 0) {
-                    console.log(elem.data);
-                }
-            }
-
-            //console.log($(this)[0]);
-            i++;
-            if (i == 100) process.exit(0);
-            let baseUrl = "";
-            for (let i = 0; i < abnormalUrlArray.length; i++) {
-                let url = abnormalUrlArray[i];
-                for (let attrib of Object.values($(this)[0].attribs)) {
-                    loopCount++;
-                    if (isUrl(attrib)) {
-                        //console.log(self.target.uri);
-                        baseUrl = URL.resolve(self.target.uri, attrib);
-                        //   console.log(baseUrl);
-                        if (baseUrl.indexOf(url) !== -1) {
-                            abnormalUrlArray.splice(i, 1);
-                        }
-                    }
-                    /*if (attrib === url || attrib === baseUrl.protocol + "//" + baseUrl.host + url) {
-                        abnormalUrlArray.splice(i, 1);
-                    } else {
-                        if (baseUrl !== "") {
-                            console.log("attrib: " + attrib);
-                            console.log("uri: " + url);
-                            console.log("url: " + baseUrl.protocol + "//" + baseUrl.host + baseUrl.pathname);
-                        }
-                    }
-                }
-            }
-        });
-        console.log(loopCount);
-        callback(abnormalUrlArray);
-    }
-
-    */filterHtmlComments(body, callback) {
+    filterHtmlComments(body, callback) {
         let regex = /<!--(.|\s)*?-->/gi;
         let filteredBody = body.replace(regex, '');
         regex = /<style>(.|\s)*?<\/style>/;

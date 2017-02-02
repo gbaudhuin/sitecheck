@@ -34,7 +34,7 @@ let check_sitemap_robot = require("../../../src/sitemap_robot-txt");
 describe('checks all modules', function () {
     this.timeout(60000);
 
-    it.only('test code disclosure', (done) => {
+    it('test code disclosure', (done) => {
         let check = new check_code_disclosure(new Target('http://www.w3schools.com/Php/php_error.asp', CONSTANTS.TARGETTYPE.PAGE));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -47,7 +47,7 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('test path disclosure', (done) => {
+    it('test path disclosure', (done) => {
         let check = new check_path_disclosure(new Target('https://www.owasp.org/index.php/Full_Path_Disclosure', CONSTANTS.TARGETTYPE.PAGE));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -60,7 +60,7 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('test headers', (done) => {
+    it('test headers', (done) => {
         let check = new check_header(new Target('http://tsoungui.fr/', CONSTANTS.TARGETTYPE.PAGE));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -73,7 +73,7 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('test CORS', (done) => {
+    it('test CORS', (done) => {
         let check = new check_CORS(new Target('https://www.owasp.org/index.php/CORS_OriginHeaderScrutiny', CONSTANTS.TARGETTYPE.PAGE));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -86,7 +86,7 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('test error pages', (done) => {
+    it('test error pages', (done) => {
         let check = new check_error_page(new Target('http://valerian.crasnier.estiamstudents.com/not_found', CONSTANTS.TARGETTYPE.PAGE));
         check.check(new CancellationToken()).then(() => {
             done();
@@ -112,7 +112,7 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('can grab email addresses', (done) => {
+    it('can grab email addresses', (done) => {
         let emails = new get_email_website();
         emails.checkForEmails('http://peoleo.fr/', new CancellationToken(), (emailList, err) => {
             if (emailList) {
@@ -124,8 +124,8 @@ describe('checks all modules', function () {
         });
     });
 
-    it.only('can fetch robots.txt and load sitemap', (done) => {
-        let robottxt = new check_sitemap_robot('http://peoleo.fr/robots.txt');
+    it('can fetch robots.txt and load sitemap', (done) => {
+        let robottxt = new check_sitemap_robot('http://peoleo.fr/afiaia.txt');
         robottxt.initializeRobotParser(new CancellationToken(), (err) => {
             if (!err) {
                 robottxt.getUrlsFromSitemap('', new CancellationToken(), (urlList, err) => {
