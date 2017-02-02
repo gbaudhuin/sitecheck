@@ -68,6 +68,7 @@ class Sitemap_Robot {
                             for (let item of result.urlset.url) {
                                 self.sitemap_urls.push(item.loc);
                             }
+                            console.log(self.sitemap_urls.length + " URLs found");
                             done(self.sitemap_urls, null);
                         });
                     } else {
