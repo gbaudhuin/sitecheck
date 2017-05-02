@@ -305,3 +305,5 @@ node_modules/
 /.coveralls.yml
 
 ./test/checks/server/ut_global_dev.js
+
+./W3C_validator_results/*

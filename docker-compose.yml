@@ -1,0 +1,13 @@
+sitecheck:
+  build: .
+  ports:
+    - "60022:22"
+  links: 
+    - mongo
+    - redis
+  environment:
+    - SSH_KEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHcC2o9gazQtBGhz1xj8lEVWYvv/HhZs2BqxgurAvkvQXHhcoprtohT0dIX+iMXjUMWBZYjOXlzgVImfNpGZQcJ3iSTodSTqMc9B+AYv+h89b0aGxVj9S5plo0v3ryyn2GDh3e7FLDsAO/Ckk9dsHi2YVaDN19QpkMo9xk0I4I0HTYopCdsdeEuG5yOopPoB3Lrhh2j5RmX6tDpe7TID0dWpItQKS7WrkRj2GY9QD1+Ai2+hC5KZgk4B0FL0TIF3bM29+UJ9J93d4ZY6gWJoJSGivuNrom1zVd4q7FVGlk306B3GWnSNTgtHSs94+x7tQRwXmZKlZIUVtsIQb3fYueZWlais1UIczour4hV6XhY+oBmY3ozfXjfaMLVE3wFYMCnE2zy8BmnIxlS2XipZriK/yPcqQASrbtCjHdPlQgWyNIQEmxJF8P9TPGxbi6ToGd06/TlDoUj51OI1Aw/RaF9Os+4HZfQw/zUYyCAmSqDft/COtTiDWWVevIz5sa1Yp5cnzHfNVbJknqNvqVbr0ZeVDLdx1uwKRCLEJmJDU8gOB9W02zF7fWhGXCvEbe3/ol/Sf4E817fijukkTYDMJjzVkOxmH08kwKMfRVgnuPLlTjnZ2rv8IyeepNLsbgVAhP7GSQEQO/QxRgw2Jsz2PLC9bynxnx2uziTZBUwWrkVQ== xaelis@valerian-pc
+mongo:
+  image: mongo:latest
+redis:
+  image: redis:latest
