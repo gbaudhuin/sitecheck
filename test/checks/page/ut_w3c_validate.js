@@ -28,7 +28,11 @@ var server = http.createServer(function (req, res) {
     res.end('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Titre de l' +
         'a page</title><link rel="stylesheet" href="style.css"><script src="script.js"></script>' +
         '</head><body></body></html>');
-  } else {
+  } else if (req.url === '/fail') {
+    res.writeHead(403, {'Content-Type': 'text/html'});
+    res.end('aeaea');
+  }
+   else {
     res.writeHead(404, {'Content-Type': 'text/plain'});
     res.end('wrong request');
   }
@@ -42,7 +46,7 @@ describe('checks/server/check_w3c_validate.js', function () {
 
   this.timeout(60000);
 
-  it('is a valid page', function (done) {
+  it.only('is a valid page', function (done) {
     let check = new check_w3c_validate(new Target('http://localhost:8000/validate', CONSTANTS.TARGETTYPE.PAGE));
     check
       .check(new CancellationToken())
@@ -75,6 +79,23 @@ describe('checks/server/check_w3c_validate.js', function () {
       });
   });
 
+  it.only('is not a valid page', function (done) {
+    let check = new check_w3c_validate(new Target('http://tsoungui.fr', CONSTANTS.TARGETTYPE.PAGE));
+    check
+      .check(new CancellationToken())
+      .then(() => {
+        done();
+      })
+      .catch((issues) => {
+        if (issues && issues.length > 0 && issues[0].errorContent) {
+          console.log(issues[0].errorContent);
+          done();
+        } else {
+          done(new Error("unexpected issue(s) raised"));
+        }
+      });
+  });
+  
   after(function () {
     server.close();
   });

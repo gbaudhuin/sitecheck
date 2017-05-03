@@ -21,6 +21,7 @@ var Check = require('../../check');
 const CONSTANTS = require("../../constants.js");
 let md5 = require('md5');
 let request = require('request');
+var tidy = require('htmltidy').tidy;
 
 module.exports = class CheckW3CValidator extends Check {
     constructor(target) {
@@ -33,31 +34,21 @@ module.exports = class CheckW3CValidator extends Check {
         let self = this;
         self._cancellationToken = cancellationToken;
         let timeout = 10000;
-        let obj = {};
+        let obj = null;
 
         request.get({
             url: self.target.uri.href,
             timeout: timeout,
             cancellationToken: cancellationToken
         }, function (err, res, body) {
-            fs.writeFile('./W3C_validator_results/' + md5(self.target.uri.href) + '.html', body, (err) => {
+            fs.writeFile('./W3C_validator_results/' + md5(self.target.uri.href) + '.html', body, 'utf8', (err) => {
                 const spawn = require('child_process').spawn;
                 const validator = spawn('java', [
-                    '-jar',
-                    'node_modules/vnu-jar/build/dist/vnu.jar',
-                    '--format',
-                    'json',
-                    './W3C_validator_results/' + md5(self.target.uri.href) + '.html'
+                    '-jar', 'node_modules/vnu-jar/build/dist/vnu.jar', '--format', 'json', './W3C_validator_results/' + md5(self.target.uri.href) + '.html'
                 ]);
 
                 validator
                     .stderr
-                    .on('data', (data) => {
-                        obj = data.toString();
-                    });
-
-                validator
-                    .stdout
                     .on('data', (data) => {
                         obj = data.toString();
                     });
@@ -78,10 +69,11 @@ module.exports = class CheckW3CValidator extends Check {
                         }
                     } catch (e) {
                         self._raiseIssue("check_w3c_validate.xml", self.target.uri, "Error happened", true);
-                        try{
+                        try {
                             fs.unlinkSync('./W3C_validator_results/' + md5(self.target.uri.href) + '.html');
                             done();
-                        } catch(e) {
+                        } catch (e) {
+                            /* istanbul ignore next */
                             done();
                         }
                     }
