@@ -21,7 +21,6 @@ var Check = require('../../check');
 const CONSTANTS = require("../../constants.js");
 let md5 = require('md5');
 let request = require('request');
-var tidy = require('htmltidy').tidy;
 
 module.exports = class CheckW3CValidator extends Check {
     constructor(target) {
