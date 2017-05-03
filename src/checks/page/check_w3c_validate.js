@@ -78,7 +78,12 @@ module.exports = class CheckW3CValidator extends Check {
                         }
                     } catch (e) {
                         self._raiseIssue("check_w3c_validate.xml", self.target.uri, "Error happened", true);
-                        done();
+                        try{
+                            fs.unlinkSync('./W3C_validator_results/' + md5(self.target.uri.href) + '.html');
+                            done();
+                        } catch(e) {
+                            done();
+                        }
                     }
                 });
             });
